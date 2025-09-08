@@ -1,0 +1,53 @@
+{
+  "name": "CoreThink-MCP",
+  "version": "0.1.0",
+  "description": "GSRに基づく自然言語推論と安全なコード変更を支援するMCPサーバー",
+  "rules": [
+    {
+      "name": "自然言語内推論の遵守",
+      "description": "すべてのツール出力は自然言語で、翻訳や構造化を避け、推論過程を保持すること。",
+      "pattern": ".*",
+      "severity": "error",
+      "check": "output must be plain text with reasoning steps, no JSON unless for internal use"
+    },
+    {
+      "name": "制約ファイルの参照",
+      "description": "validateツールはconstraints.txtをResourceとして参照し、変更不可。",
+      "pattern": "src/corethink_mcp/server/.*\\.py",
+      "check": "uses app.resource('read_constraints') or equivalent"
+    },
+    {
+      "name": "サンドボックス実行の強制",
+      "description": "すべてのコード変更はgit worktreeまたはtemp clone内で実行。",
+      "pattern": "execute_with_safeguards",
+      "check": "creates isolated environment before writing to filesystem"
+    },
+    {
+      "name": "ログ出力先の制限",
+      "description": "MCP標準に従い、ログはstderrにのみ出力。print禁止。",
+      "pattern": ".*\\.py",
+      "check": "uses logging module with stderr handler, no print() statements"
+    },
+    {
+      "name": "dry-runのデフォルト化",
+      "description": "実行系ツールはdry_run=Trueをデフォルトに設定。",
+      "pattern": "execute_with_safeguards",
+      "check": "dry_run: bool = True in function signature"
+    },
+    {
+      "name": "MCPリソースの明示的公開",
+      "description": "制約、ログ、プロンプト雛形は明示的にResource登録。",
+      "pattern": "corethink_server.py",
+      "check": "@app.resource() is used for constraints.txt and trace.log"
+    }
+  ],
+  "ai": {
+    "suggestions": [
+      "この変更は公開APIを変更しますか？",
+      "制約ファイルに適合していますか？",
+      "dry-runでまず検証してください",
+      "推論過程を自然言語で記録しましたか？"
+    ],
+    "prompt": "あなたはCoreThink-MCPの開発アシスタントです。GSRの思想（自然言語内推論）を守り、安全で最小な変更を提案してください。"
+  }
+}

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  corethink-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - ./repo_target:/repo_target  # 対象リポジトリのマウント
+    environment:
+      - CORETHINK_REPO_ROOT=/repo_target
+      - PYTHONPATH=/app/src
+    working_dir: /app
+    command: uv run src/corethink_mcp/server/corethink_server.py
+    stdin_open: true
+    tty: true
+
+  # 将来のNode.js MCPサーバー（予約）
+  # corethink-mcp-node:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.node
+  #   ports:
+  #     - "8081:8081"

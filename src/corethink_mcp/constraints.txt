@@ -1,0 +1,13 @@
+# CoreThink-MCP 制約ファイル
+# このファイルは、安全なコード変更のための制約ルールを定義します
+
+MUST: 公開APIの変更を禁止
+NEVER: printやconsole.logなどのデバッグ出力を追加しない
+SHOULD: 関数変更時はdocstringを更新する
+MUST: すべてのテストがパスすること
+NEVER: パスワードや秘密情報をコードに含めない
+SHOULD: 変更前にバックアップを作成する
+MUST: 型ヒントを追加・維持する
+NEVER: 例外処理を削除しない
+SHOULD: ログ出力はloggingモジュールを使用する
+MUST: ファイル変更前に制約検証を実行する

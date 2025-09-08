@@ -1,0 +1,54 @@
+{
+  "projectType": "mcp-server",
+  "language": "python",
+  "framework": "fastmcp",
+  "rules": [
+    {
+      "id": "gsr-natural-reasoning",
+      "message": "出力は自然言語で推論過程を含めること。JSONや構造化出力は避ける。",
+      "appliesTo": "tool output",
+      "severity": "error"
+    },
+    {
+      "id": "safe-execution",
+      "message": "execute_with_safeguardsは必ずdry_run=Trueで始める。",
+      "appliesTo": "execute_with_safeguards",
+      "severity": "error"
+    },
+    {
+      "id": "no-print",
+      "message": "print()禁止。ログはlogging→stderrのみ。",
+      "appliesTo": "*.py",
+      "severity": "error"
+    },
+    {
+      "id": "constraints-as-resource",
+      "message": "constraints.txtはMCP Resourceとして公開すること。",
+      "appliesTo": "corethink_server.py",
+      "severity": "warning"
+    }
+  ],
+  "mcp": {
+    "tools": [
+      "reason_about_change",
+      "validate_against_constraints",
+      "execute_with_safeguards"
+    ],
+    "resources": [
+      "read_constraints",
+      "read_reasoning_log"
+    ],
+    "server": {
+      "command": "uv",
+      "args": ["run", "src/corethink_mcp/server/corethink_server.py"]
+    }
+  },
+  "ai": {
+    "role": "GSR推論エンジン開発者",
+    "guidelines": [
+      "自然言語で思考を残す",
+      "最小変更を優先",
+      "安全性を第一に"
+    ]
+  }
+}
