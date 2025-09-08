@@ -45,6 +45,15 @@
 - [ ] Cursor 動作確認
 - [ ] Kiro/Cline 動作確認
 
+### 🚀 配布・拡張
+- [ ] **VS Code MCP ギャラリーへの登録** 🆕
+  - VS Code 1.102+ の正式MCPサポートに対応
+  - MCP Servers ギャラリーでの検索・インストール対応
+  - プロファイル・Settings Sync対応
+- [ ] PyPI パッケージ公開
+- [ ] NPM パッケージ公開（Node.js版）
+- [ ] Docker Hub イメージ公開
+
 ### 🧪 テスト実装
 - [ ] 単体テスト作成（pytest）
 - [ ] 統合テスト作成

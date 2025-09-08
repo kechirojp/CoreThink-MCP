@@ -19,17 +19,40 @@ cd CoreThink-MCP
 
 ### 2. 環境セットアップ
 
-#### オプションA: UV使用（推奨）
+#### 🚀 オプションA: UV使用（推奨）
+
+UVは最新のPython依存関係管理ツールで、高速で安全な環境構築が可能です。
 
 ```bash
 # UVをインストール（まだの場合）
+# Windows (PowerShell)
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+# macOS/Linux
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 依存関係のインストール
+# 仮想環境作成（Python 3.11.12指定）
+uv venv --python 3.11.12
+
+# 仮想環境のアクティベート
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# 依存関係のインストール（推奨方法）
+uv add mcp[cli] fastmcp pyyaml gitpython python-dotenv
+
+# または既存のプロジェクトファイルから
 uv sync
 ```
 
-#### オプションB: 標準Python環境
+**💡 UV環境の利点:**
+- ⚡ **高速インストール**: pip比で10-100x高速
+- 🔒 **一貫性保証**: `uv.lock`によるバージョン固定
+- 🧹 **クリーンな依存関係**: 不要パッケージの自動除外
+- 🔄 **高速リビルド**: キャッシュによる差分インストール
+
+#### 🐍 オプションB: 標準Python環境
 
 ```bash
 # 仮想環境作成
@@ -42,6 +65,8 @@ python -m venv .venv
 source .venv/bin/activate
 
 # 依存関係のインストール
+pip install mcp[cli] fastmcp pyyaml gitpython python-dotenv
+# または
 pip install -e .
 ```
 

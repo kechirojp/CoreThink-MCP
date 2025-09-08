@@ -16,30 +16,93 @@ CoreThink-MCP は、[CoreThink論文](https://arxiv.org/abs/2509.00971)で提案
 
 ### 1. インストール
 
+#### 🚀 UV環境での推奨インストール
+
+UVは最新のPython依存関係管理ツールで、高速で安全な環境構築が可能です。
+
 ```bash
 # リポジトリをクローン
 git clone https://github.com/kechirojp/CoreThink-MCP.git
 cd CoreThink-MCP
 
-# UV環境構築
+# UV環境構築（Python 3.11.12指定）
 uv venv --python 3.11.12
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# Windows
+.venv\Scripts\activate
+# macOS/Linux  
+source .venv/bin/activate
+
+# 依存関係インストール（UV推奨）
+uv add mcp[cli] fastmcp pyyaml gitpython python-dotenv
+
+# または requirements.txt 使用の場合
+uv pip install -r requirements.txt
+```
+
+#### 🐍 標準Python環境
+
+```bash
+# リポジトリをクローン
+git clone https://github.com/kechirojp/CoreThink-MCP.git
+cd CoreThink-MCP
+
+# 仮想環境作成
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS/Linux
+source .venv/bin/activate
 
 # 依存関係インストール
-uv add mcp[cli] fastmcp pyyaml gitpython python-dotenv
+pip install mcp[cli] fastmcp pyyaml gitpython python-dotenv
 ```
+
+**💡 UV環境の利点:**
+- ⚡ **高速インストール**: pip比で10-100x高速
+- 🔒 **一貫性保証**: `uv.lock`によるバージョン固定
+- 🧹 **クリーンな依存関係**: 不要パッケージの自動除外
+- 🔄 **高速リビルド**: キャッシュによる差分インストール
 
 ### 2. サーバー起動
 
-```bash
-# 開発モード
-python src/corethink_mcp/server/corethink_server.py
+#### UV環境での起動（推奨）
 
-# または UV環境
+```bash
+# 仮想環境アクティベート
+# Windows
+.venv\Scripts\activate
+# macOS/Linux  
+source .venv/bin/activate
+
+# UV環境でサーバー起動
 uv run python src/corethink_mcp/server/corethink_server.py
 
-# または Docker
+# または開発モードで起動
+uv run --dev python src/corethink_mcp/server/corethink_server.py
+```
+
+#### 標準Python環境での起動
+
+```bash
+# 仮想環境アクティベート
+# Windows
+.venv\Scripts\activate
+# macOS/Linux
+source .venv/bin/activate
+
+# サーバー起動
+python src/corethink_mcp/server/corethink_server.py
+```
+
+#### Docker起動
+
+```bash
+# Docker Compose使用
 docker-compose up
+
+# 単体Docker起動
+docker build -t corethink-mcp .
+docker run -p 8080:8080 corethink-mcp
 ```
 
 ### 3. MCP接続設定
@@ -64,19 +127,35 @@ docker-compose up
 
 #### VS Code (v1.102以降) 🆕
 
-**MCPサポートが正式版になりました！** VS Code 1.102以降では、以下の方法でMCPサーバーを簡単にインストール・管理できます：
+**🎉 MCPサポートが正式版になりました！** VS Code 1.102以降では、MCPサーバーを公式サポートしており、以下の方法で簡単にインストール・管理できます：
 
-**方法1: MCP Servers ギャラリー（推奨）**
+**方法1: MCP Servers ギャラリー（推奨）** 🆕
 1. VS Codeで `Ctrl+Shift+X` を押して拡張機能ビューを開く
 2. **MCP SERVERS** セクションを探す
 3. **Browse MCP Servers...** をクリック
-4. [VS Code MCP ギャラリー](https://code.visualstudio.com/mcp) から検索・インストール
+4. [VS Code MCP ギャラリー](https://code.visualstudio.com/mcp) から **CoreThink-MCP** を検索・インストール
+
+> **📝 注意**: 現在ギャラリーへの登録を準備中です。登録完了まで方法2をご利用ください。
 
 **方法2: 手動設定**
 1. `Ctrl+Shift+P` でコマンドパレットを開く
 2. **MCP: Open User Configuration** を実行
 3. `mcp.json` ファイルに以下を追加：
 
+**UV環境使用の場合（推奨）:**
+```json
+{
+  "servers": {
+    "corethink-mcp": {
+      "command": "uv",
+      "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
+      "cwd": "/absolute/path/to/your/CoreThink-MCP"
+    }
+  }
+}
+```
+
+**標準Python環境使用の場合:**
 ```json
 {
   "servers": {
@@ -89,12 +168,14 @@ docker-compose up
 }
 ```
 
-**新機能（VS Code 1.102+）:**
+**🆕 新機能（VS Code 1.102+）:**
+- ✅ **公式MCPサポート**: 拡張機能不要でMCPサーバー利用可能
 - ✅ **MCP Servers管理ビュー**: Extensions ビューで一元管理
 - ✅ **プロファイル対応**: 各プロファイルごとに異なるMCPサーバー設定
 - ✅ **Settings Sync**: MCPサーバー設定の同期対応
 - ✅ **Dev Container対応**: `devcontainer.json` での設定可能
 - ✅ **リアルタイム管理**: Start/Stop/Restart、ログ表示、設定確認
+- ✅ **ギャラリー統合**: MCP Serversギャラリーでのワンクリックインストール
 
 #### LM Studio (v0.3.17以降) 🆕
 
