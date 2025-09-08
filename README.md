@@ -778,7 +778,8 @@ corethink-mcp/
 
 **"CoreThink: A Symbolic Reasoning Layer to reason over Long Horizon Tasks with LLMs"**  
 *Jay Vaghasiya, Omkar Ghugarkar, Vishvesh Bhat, Vipul Dholaria, Julian McAuley*  
-arXiv:2509.00971v2 [cs.AI] 4 Sep 2025
+arXiv:2509.00971v2 [cs.AI] 4 Sep 2025  
+Licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 
 ### 論文の主要貢献
 
