@@ -4,6 +4,18 @@
 
 CoreThink-MCP は、[CoreThink論文](https://arxiv.org/abs/2509.00971)で提案された **General Symbolics Reasoning (GSR)** の思想を実装した Model Context Protocol (MCP) サーバーです。LLMが自然言語のまま推論・制約検証・安全実行を行える「外付け推論レイヤー」として機能します。
 
+## 📋 目次
+
+- [🎯 特徴](#-特徴)
+- [🚀 クイックスタート](#-クイックスタート)
+- [📱 アプリケーション設定](#-アプリケーション設定)
+- [🛠 利用可能なツール](#-利用可能なツール)
+- [⚙️ 高度な設定](#️-高度な設定)
+- [🔧 トラブルシューティング](#-トラブルシューティング)
+- [📁 プロジェクト構造](#-プロジェクト構造)
+- [🧪 開発・ロードマップ](#-開発ロードマップ)
+- [🤝 対応アプリケーション](#-対応アプリケーション)
+
 ## 🎯 特徴
 
 - **🔍 自然言語内推論**: JSON構造化せず、言語のまま推論過程を保持
@@ -107,11 +119,32 @@ docker run -p 8080:8080 corethink-mcp
 
 ### 3. MCP接続設定
 
-**詳細なセットアップ手順は [SETUP.md](SETUP.md) を参照してください。**
+## 📱 アプリケーション設定
 
-#### Claude Desktop
+<details>
+<summary>🎭 Claude Desktop 設定</summary>
 
-基本設定例（`claude_desktop_config.json`）：
+### 設定ファイルの場所
+
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Linux**: `~/.config/claude/claude_desktop_config.json`
+
+### UV環境の場合（推奨）
+
+```json
+{
+  "mcpServers": {
+    "corethink-mcp": {
+      "command": "uv",
+      "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
+    }
+  }
+}
+```
+
+### 標準Python環境の場合
 
 ```json
 {
@@ -119,82 +152,158 @@ docker run -p 8080:8080 corethink-mcp
     "corethink-mcp": {
       "command": "python",
       "args": ["src/corethink_mcp/server/corethink_server.py"],
-      "cwd": "/absolute/path/to/your/CoreThink-MCP"
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP",
+      "env": {
+        "PATH": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP/.venv/bin:/YOUR_ABSOLUTE_PATH/CoreThink-MCP/.venv/Scripts:${PATH}"
+      }
     }
   }
 }
 ```
 
-#### VS Code (v1.102以降) 🆕
+### パス設定の重要事項
+
+**⚠️ 重要**: 必ず以下の点を確認してください：
+
+1. `cwd` フィールドには、CoreThink-MCPプロジェクトの**絶対パス**を指定
+2. パスの区切り文字は OS に応じて調整:
+   - **Windows**: `C:\\Users\\YourName\\CoreThink-MCP`
+   - **macOS/Linux**: `/home/yourname/CoreThink-MCP`
+3. 仮想環境を使用する場合は、`env.PATH` を適切に設定
+
+</details>
+
+<details>
+<summary>💻 VS Code (v1.102以降) 設定</summary>
 
 **🎉 MCPサポートが正式版になりました！** VS Code 1.102以降では、MCPサーバーを公式サポートしており、以下の方法で簡単にインストール・管理できます：
 
-**方法1: MCP Servers ギャラリー（推奨）** 🆕
-1. VS Codeで `Ctrl+Shift+X` を押して拡張機能ビューを開く
+### 推奨方法: MCP Servers ギャラリー 🆕
+
+VS Code 1.102以降では、MCP Serversの管理が大幅に簡単になりました：
+
+1. **拡張機能ビューを開く**: `Ctrl+Shift+X` (Windows/Linux) または `Cmd+Shift+X` (macOS)
 2. **MCP SERVERS** セクションを探す
 3. **Browse MCP Servers...** をクリック
-4. [VS Code MCP ギャラリー](https://code.visualstudio.com/mcp) から **CoreThink-MCP** を検索・インストール
+4. [VS Code MCP ギャラリー](https://code.visualstudio.com/mcp) でCoreThink-MCPを検索
+5. **Install** ボタンをクリックして自動インストール
 
-> **📝 注意**: 現在ギャラリーへの登録を準備中です。登録完了まで方法2をご利用ください。
+> **📝 注意**: 現在ギャラリーへの登録を準備中です。登録完了まで手動設定をご利用ください。
 
-**方法2: 手動設定**
-1. `Ctrl+Shift+P` でコマンドパレットを開く
-2. **MCP: Open User Configuration** を実行
-3. `mcp.json` ファイルに以下を追加：
+### 手動設定方法
 
-**UV環境使用の場合（推奨）:**
+#### 設定ファイルアクセス
+```bash
+# ユーザー設定ファイルを開く
+Ctrl+Shift+P → "MCP: Open User Configuration"
+
+# リモート環境の場合
+Ctrl+Shift+P → "MCP: Open Remote User Configuration"
+```
+
+#### UV環境使用の場合（推奨）
 ```json
 {
   "servers": {
     "corethink-mcp": {
       "command": "uv",
       "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
-      "cwd": "/absolute/path/to/your/CoreThink-MCP"
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
     }
   }
 }
 ```
 
-**標準Python環境使用の場合:**
+#### 標準Python環境使用の場合
 ```json
 {
   "servers": {
     "corethink-mcp": {
       "command": "python",
       "args": ["src/corethink_mcp/server/corethink_server.py"],
-      "cwd": "/absolute/path/to/your/CoreThink-MCP"
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
     }
   }
 }
 ```
 
-**🆕 新機能（VS Code 1.102+）:**
-- ✅ **公式MCPサポート**: 拡張機能不要でMCPサーバー利用可能
-- ✅ **MCP Servers管理ビュー**: Extensions ビューで一元管理
-- ✅ **プロファイル対応**: 各プロファイルごとに異なるMCPサーバー設定
-- ✅ **Settings Sync**: MCPサーバー設定の同期対応
-- ✅ **Dev Container対応**: `devcontainer.json` での設定可能
-- ✅ **リアルタイム管理**: Start/Stop/Restart、ログ表示、設定確認
-- ✅ **ギャラリー統合**: MCP Serversギャラリーでのワンクリックインストール
+### 新機能 (VS Code 1.102+)
 
-#### LM Studio (v0.3.17以降) 🆕
+#### MCP Servers 管理ビュー
+- **Extensions ビュー** → **MCP SERVERS - INSTALLED** セクション
+- 各サーバーの状態管理：
+  - ✅ Start Server / Stop Server / Restart Server
+  - 📋 Show Output (ログ表示)
+  - ⚙️ Show Configuration (設定表示)
+  - 🔗 Configure Model Access (モデルアクセス管理)
+  - 📊 Show Sampling Requests (デバッグ用)
+  - 📁 Browse Resources (リソース参照)
+  - 🗑️ Uninstall (アンインストール)
 
-**ローカルLLMとMCPの強力な組み合わせ！**
+#### Dev Container対応
+`devcontainer.json` で直接MCP設定が可能：
 
-**🚀 ワンクリックインストール:**
+```json
+{
+  "image": "mcr.microsoft.com/devcontainers/python:latest",
+  "customizations": {
+    "vscode": {
+      "mcp": {
+        "servers": {
+          "corethink-mcp": {
+            "command": "python",
+            "args": ["src/corethink_mcp/server/corethink_server.py"],
+            "cwd": "/workspaces/CoreThink-MCP"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+#### プロファイル対応
+- 各VS Codeプロファイルごとに異なるMCPサーバー設定が可能
+- Settings Syncでプロファイル間での設定同期対応
+- チーム・プロジェクト別のMCPサーバー構成管理
+
+#### 移行サポート
+既存の `settings.json` にMCP設定がある場合：
+- **自動検出**: VS Codeが既存設定を自動で検出
+- **リアルタイム移行**: 新しい `mcp.json` 形式に自動変換
+- **通知表示**: 移行完了時に説明付き通知
+- **クロスプラットフォーム**: ローカル、リモート、WSL、Codespacesすべて対応
+
+</details>
+
+<details>
+<summary>🖥️ LM Studio (v0.3.17以降) 設定</summary>
+
+**LM Studio はローカルLLMとMCPを組み合わせた強力な開発環境を提供します！**
+
+### ワンクリックインストール 🚀
+
+**最も簡単な方法:** ボタンをクリックして自動インストール
+
+**標準Python環境:**
 
 [![Add CoreThink-MCP to LM Studio](https://files.lmstudio.ai/deeplink/mcp-install-light.svg)](lmstudio://add_mcp?name=corethink-mcp&config=eyJjb3JldGhpbmstbWNwIjogeyJjb21tYW5kIjogInB5dGhvbiIsICJhcmdzIjogWyJzcmMvY29yZXRoaW5rX21jcC9zZXJ2ZXIvY29yZXRoaW5rX3NlcnZlci5weSJdLCAiY3dkIjogIi9hYnNvbHV0ZS9wYXRoL3RvL3lvdXIvQ29yZVRoaW5rLU1DUCJ9fQ==)
 
-**UV環境使用の場合:**
+**UV環境:**
 
 [![Add CoreThink-MCP (UV) to LM Studio](https://files.lmstudio.ai/deeplink/mcp-install-light.svg)](lmstudio://add_mcp?name=corethink-mcp-uv&config=eyJjb3JldGhpbmstbWNwIjogeyJjb21tYW5kIjogInV2IiwgImFyZ3MiOiBbInJ1biIsICJweXRob24iLCAic3JjL2NvcmV0aGlua19tY3Avc2VydmVyL2NvcmV0aGlua19zZXJ2ZXIucHkiXSwgImN3ZCI6ICIvYWJzb2x1dGUvcGF0aC90by95b3VyL0NvcmVUaGluay1NQ1AifX0=)
 
-**⚠️ 重要**: インストール後、`cwd` のパスを必ずあなたの環境に合わせて変更してください。
+**⚠️ 重要**: インストール後、LM Studio で `cwd` のパスを必ずあなたの環境に合わせて変更してください。
 
-**手動設定方法:**
-1. LM Studio で **Program** タブを開く
-2. **Install > Edit mcp.json** をクリック
-3. 以下の設定を追加：
+### 手動設定
+
+**必要バージョン**: LM Studio 0.3.17 (b10) 以降
+
+#### 設定手順
+1. **LM Studio を起動**
+2. **Program タブ** を開く (右サイドバー)
+3. **Install > Edit mcp.json** をクリック
+4. エディタで以下の設定を追加：
 
 ```json
 {
@@ -202,19 +311,63 @@ docker run -p 8080:8080 corethink-mcp
     "corethink-mcp": {
       "command": "python",
       "args": ["src/corethink_mcp/server/corethink_server.py"],
-      "cwd": "/absolute/path/to/your/CoreThink-MCP"
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
     }
   }
 }
 ```
 
-**特徴:**
-- 🖥️ **完全ローカル**: インターネット不要でプライベート推論
-- ⚡ **高速処理**: ローカルLLMとMCPの直接統合
-- 🛡️ **セキュリティ**: データが外部に送信されない
-- 🔧 **カスタマイズ**: LLMモデルの自由選択
+#### UV環境使用の場合
+```json
+{
+  "mcpServers": {
+    "corethink-mcp": {
+      "command": "uv",
+      "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
+    }
+  }
+}
+```
 
-**⚠️ 重要**: `cwd` のパスは必ずあなたの環境に合わせて変更してください。
+### LM Studio の特徴
+
+#### 完全ローカル実行
+- **プライバシー**: データが外部に送信されない
+- **オフライン対応**: インターネット接続不要
+- **高速処理**: ローカルGPUを活用した高速推論
+
+#### カスタマイズ性
+- **モデル選択**: Llama, Mistral, CodeLlama など自由選択
+- **パラメータ調整**: Temperature, Top-p, Max tokens などの調整
+- **プリセット**: チーム・プロジェクト別の設定プリセット
+
+#### セキュリティ
+- **コード保護**: コードが外部サービスに送信されない
+- **企業対応**: 機密情報の漏洩リスクなし
+- **アクセス制御**: MCP サーバーの権限管理
+
+### 使用方法
+
+#### チャットでの利用
+1. **LM Studio でモデルをロード**
+2. **Chat タブ** でコードに関する質問
+3. **CoreThink-MCP ツール** が自動で利用可能
+4. **GSR推論・制約検証・安全実行** をローカルで実行
+
+#### 推奨モデル
+
+**コード生成・編集向け:**
+- CodeLlama 13B/34B
+- Llama 3.1 8B/70B Instruct
+- Mistral 7B/22B Instruct
+- DeepSeek Coder V2
+
+**日本語対応:**
+- Japanese Stable LM 3B/7B
+- ELYZA japanese-llama-2-7b/13b
+
+</details>
 
 ## 🛠 利用可能なツール
 
@@ -269,6 +422,8 @@ corethink-mcp/
 
 ## 🔧 設定
 
+## ⚙️ 高度な設定
+
 ### 環境変数 (.env)
 
 ```bash
@@ -280,28 +435,122 @@ CORETHINK_SANDBOX_DIR=.sandbox     # サンドボックス名
 
 ### 制約ファイル (constraints.txt)
 
-```
+```txt
 MUST: 公開APIの変更を禁止
 NEVER: printやconsole.logなどのデバッグ出力を追加しない
 SHOULD: 関数変更時はdocstringを更新する
 MUST: すべてのテストがパスすること
 ```
+
+## 🔧 トラブルシューティング
+
+### 動作確認
+
+#### サーバーの手動起動テスト
 
 ```bash
-CORETHINK_REPO_ROOT=.              # 対象リポジトリ
-CORETHINK_LOG_LEVEL=INFO           # ログレベル
-CORETHINK_PORT=8080                # サーバーポート
-CORETHINK_SANDBOX_DIR=.sandbox     # サンドボックス名
+# プロジェクトディレクトリで実行
+cd /YOUR_ABSOLUTE_PATH/CoreThink-MCP
+
+# UV環境の場合
+uv run python src/corethink_mcp/server/corethink_server.py
+
+# 標準Python環境の場合
+.venv/bin/python src/corethink_mcp/server/corethink_server.py  # Unix
+.venv\Scripts\python src/corethink_mcp/server/corethink_server.py  # Windows
 ```
 
-### 制約ファイル (constraints.txt)
+#### MCPテストクライアント
 
+```bash
+python test_mcp_client.py
 ```
-MUST: 公開APIの変更を禁止
-NEVER: printやconsole.logなどのデバッグ出力を追加しない
-SHOULD: 関数変更時はdocstringを更新する
-MUST: すべてのテストがパスすること
+
+正常に動作している場合、以下のような出力が表示されます：
+
+```txt
+=== Tool: reason_about_change ===
+【判定】PROCEED
+【理由】制約適合性確認済み
+【次ステップ】実装推奨
+
+=== Tool: validate_against_constraints ===
+✅ MUST: 必須制約適合
+❌ NEVER: 禁止制約なし
+⚠️ SHOULD: 推奨制約確認
+
+=== Tool: execute_with_safeguards ===
+【DRY RUN】サンドボックスで安全実行
+変更ファイル: example.py
+実ファイルに影響なし
 ```
+
+### よくある問題
+
+#### 問題1: "command not found" エラー
+
+**原因**: パスが正しく設定されていない
+
+**解決策**:
+1. 絶対パスを確認: `pwd` (Unix) または `echo %CD%` (Windows)
+2. Python実行可能ファイルのパスを確認: `which python` (Unix) または `where python` (Windows)
+
+#### 問題2: "Module not found" エラー
+
+**原因**: 依存関係がインストールされていない
+
+**解決策**:
+```bash
+# UV環境
+uv sync
+
+# 標準環境
+pip install -e .
+```
+
+#### 問題3: Claude Desktopで認識されない
+
+**原因**: 設定ファイルの JSON 構文エラーまたはパス間違い
+
+**解決策**:
+1. JSON構文チェック: [jsonlint.com](https://jsonlint.com/)
+2. パスの確認（絶対パス、区切り文字）
+3. Claude Desktopの再起動
+
+#### 問題4: VS Code でサーバーが起動しない
+
+**原因**: MCP設定ファイルの権限またはパス問題
+
+**解決策**:
+1. MCP設定ファイルの権限確認
+2. 絶対パスの使用
+3. VS Code の再起動
+
+#### 問題5: LM Studio で接続できない
+
+**原因**: LM Studio のバージョンまたは設定問題
+
+**解決策**:
+1. LM Studio 0.3.17 (b10) 以降を使用
+2. `mcp.json` の構文確認
+3. フォルダー権限の確認
+
+### デバッグ方法
+
+- **ログ確認**: `logs/trace.log` でサーバーログを確認
+- **手動実行**: ターミナルでMCPサーバーを直接起動してテスト
+- **設定検証**: JSON構文エラーチェック
+
+### サポート
+
+問題が解決しない場合は、以下の情報と共にIssueを作成してください：
+
+- OS とバージョン
+- Python バージョン (`python --version`)
+- エラーメッセージの全文
+- 使用した設定ファイル（パスは伏字で）
+
+[GitHub Issues](https://github.com/kechirojp/CoreThink-MCP/issues)
 
 ## 🧪 開発・ロードマップ
 
