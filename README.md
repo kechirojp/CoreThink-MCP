@@ -46,6 +46,8 @@ docker-compose up
 
 **詳細なセットアップ手順は [SETUP.md](SETUP.md) を参照してください。**
 
+#### Claude Desktop
+
 基本設定例（`claude_desktop_config.json`）：
 
 ```json
@@ -60,25 +62,41 @@ docker-compose up
 }
 ```
 
-**⚠️ 重要**: `cwd` のパスは必ずあなたの環境に合わせて変更してください。
+#### VS Code (v1.102以降) 🆕
 
-**重要**: `cwd` フィールドは必ずあなたの環境でのCoreThink-MCPプロジェクトの**絶対パス**に変更してください。
+**MCPサポートが正式版になりました！** VS Code 1.102以降では、以下の方法でMCPサーバーを簡単にインストール・管理できます：
 
-### UV使用の場合
+**方法1: MCP Servers ギャラリー（推奨）**
+1. VS Codeで `Ctrl+Shift+X` を押して拡張機能ビューを開く
+2. **MCP SERVERS** セクションを探す
+3. **Browse MCP Servers...** をクリック
+4. [VS Code MCP ギャラリー](https://code.visualstudio.com/mcp) から検索・インストール
 
-UV環境を使用する場合は、以下の設定を使用してください：
+**方法2: 手動設定**
+1. `Ctrl+Shift+P` でコマンドパレットを開く
+2. **MCP: Open User Configuration** を実行
+3. `mcp.json` ファイルに以下を追加：
 
 ```json
 {
-  "mcpServers": {
+  "servers": {
     "corethink-mcp": {
-      "command": "uv",
-      "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
+      "command": "python",
+      "args": ["src/corethink_mcp/server/corethink_server.py"],
       "cwd": "/absolute/path/to/your/CoreThink-MCP"
     }
   }
 }
 ```
+
+**新機能（VS Code 1.102+）:**
+- ✅ **MCP Servers管理ビュー**: Extensions ビューで一元管理
+- ✅ **プロファイル対応**: 各プロファイルごとに異なるMCPサーバー設定
+- ✅ **Settings Sync**: MCPサーバー設定の同期対応
+- ✅ **Dev Container対応**: `devcontainer.json` での設定可能
+- ✅ **リアルタイム管理**: Start/Stop/Restart、ログ表示、設定確認
+
+**⚠️ 重要**: `cwd` のパスは必ずあなたの環境に合わせて変更してください。
 
 ## 🛠 利用可能なツール
 
@@ -186,11 +204,11 @@ MUST: すべてのテストがパスすること
 
 ## 🤝 対応アプリケーション
 
-- ✅ VSCode + GitHub Copilot
-- ✅ Claude Desktop
-- ✅ Cursor
-- ✅ Kiro
-- ✅ Cline
+- ✅ **VS Code (v1.102以降)** - MCPサポート正式版、管理ビュー対応 🆕
+- ✅ **Claude Desktop** - フル機能対応
+- ✅ **Cursor** - MCP統合対応
+- ✅ **Kiro** - コード生成・編集対応
+- ✅ **Cline** - AI開発アシスタント対応
 
 ## 📊 性能・検証
 

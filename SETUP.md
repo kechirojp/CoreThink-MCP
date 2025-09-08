@@ -96,17 +96,53 @@ pip install -e .
    - **macOS/Linux**: `/home/yourname/CoreThink-MCP`
 3. 仮想環境を使用する場合は、`env.PATH` を適切に設定
 
-## 🔧 VS Code設定
+## 🔧 VS Code設定 (v1.102以降対応) 🆕
 
-### 1. MCP Extensionのインストール
+**VS Code 1.102以降では、MCPサポートが正式版となり、大幅に改善されました！**
 
-VS Code拡張機能マーケットプレイスから「MCP」で検索してインストール
+### 1. 推奨方法: MCP Servers ギャラリー
 
-### 2. settings.jsonの設定
+VS Code 1.102以降では、MCP Serversの管理が大幅に簡単になりました：
+
+1. **拡張機能ビューを開く**: `Ctrl+Shift+X` (Windows/Linux) または `Cmd+Shift+X` (macOS)
+2. **MCP SERVERS** セクションを探す
+3. **Browse MCP Servers...** をクリック
+4. [VS Code MCP ギャラリー](https://code.visualstudio.com/mcp) でCoreThink-MCPを検索
+5. **Install** ボタンをクリックして自動インストール
+
+### 2. 手動設定方法
+
+#### 設定ファイルアクセス
+
+```bash
+# ユーザー設定ファイルを開く
+Ctrl+Shift+P → "MCP: Open User Configuration"
+
+# リモート環境の場合
+Ctrl+Shift+P → "MCP: Open Remote User Configuration"
+```
+
+#### 設定内容 (mcp.json)
+
+**VS Code 1.102以降では、MCPサーバーは `mcp.json` ファイルで管理されます：**
 
 ```json
 {
-  "mcp.servers": {
+  "servers": {
+    "corethink-mcp": {
+      "command": "python",
+      "args": ["src/corethink_mcp/server/corethink_server.py"],
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
+    }
+  }
+}
+```
+
+**UV環境の場合:**
+
+```json
+{
+  "servers": {
     "corethink-mcp": {
       "command": "uv",
       "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
@@ -115,6 +151,58 @@ VS Code拡張機能マーケットプレイスから「MCP」で検索してイ�
   }
 }
 ```
+
+### 3. 新機能 (VS Code 1.102+)
+
+#### MCP Servers 管理ビュー
+
+- **Extensions ビュー** → **MCP SERVERS - INSTALLED** セクション
+- 各サーバーの状態管理：
+  - ✅ Start Server / Stop Server / Restart Server
+  - 📋 Show Output (ログ表示)
+  - ⚙️ Show Configuration (設定表示)
+  - 🔗 Configure Model Access (モデルアクセス管理)
+  - 📊 Show Sampling Requests (デバッグ用)
+  - 📁 Browse Resources (リソース参照)
+  - 🗑️ Uninstall (アンインストール)
+
+#### Dev Container対応
+
+`devcontainer.json` で直接MCP設定が可能：
+
+```json
+{
+  "image": "mcr.microsoft.com/devcontainers/python:latest",
+  "customizations": {
+    "vscode": {
+      "mcp": {
+        "servers": {
+          "corethink-mcp": {
+            "command": "python",
+            "args": ["src/corethink_mcp/server/corethink_server.py"],
+            "cwd": "/workspaces/CoreThink-MCP"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+#### プロファイル対応
+
+- 各VS Codeプロファイルごとに異なるMCPサーバー設定が可能
+- Settings Syncでプロファイル間での設定同期対応
+- チーム・プロジェクト別のMCPサーバー構成管理
+
+### 4. 移行サポート
+
+既存の `settings.json` にMCP設定がある場合：
+
+- **自動検出**: VS Codeが既存設定を自動で検出
+- **リアルタイム移行**: 新しい `mcp.json` 形式に自動変換
+- **通知表示**: 移行完了時に説明付き通知
+- **クロスプラットフォーム**: ローカル、リモート、WSL、Codespacesすべて対応
 
 ## ✅ 動作確認
 
