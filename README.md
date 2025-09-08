@@ -39,10 +39,10 @@ CoreThink論文のablation studyによる客観的性能データ：
 
 | 手法 | 主要課題 | 技術的影響 |
 |------|---------|------------|
-| **Test-time Scaling** | Diminishing Returns | 計算効率の低下 |
-| **Chain-of-Thought** | Unfaithful Explanations | 医療・法律分野での信頼性課題 |
-| **LLMs/LRMs** | Complexity Cliff | 複雑タスクでの性能低下 |
-| **Neuro-Symbolic AI** | Integration Inconsistencies | symbolic-neural間の整合性問題 |
+| **Test-time Scaling** | Diminishing Returns | 計算リソース増大に対する性能向上の鈍化 |
+| **Chain-of-Thought** | Unfaithful Explanations | 間違いが許されない分野での信頼性課題 |
+| **LLMs/LRMs** | Complexity Cliff | 複雑タスクでの急激な性能劣化と実用性限界 |
+| **Neuro-Symbolic AI** | Integration Inconsistencies | symbolic-neural間の整合性問題による不安定性 |
 
 ### General Symbolics Reasoning (GSR)
 
@@ -51,11 +51,11 @@ GSRは自然言語内での構造化推論を実現します：
 ```text
 従来アプローチ：
 自然言語 → 形式表現 → 推論 → 自然言語
-     ↓情報損失    ↓表現不整合  ↓透明性課題
+     ↓情報保持    ↓一貫性維持  ↓過程透明化
 
 GSRアプローチ：
 自然言語 ────────────────→ 自然言語
-     ↓情報保持    ↓一貫性維持  ↓過程透明化
+     ↑情報保持    ↑一貫性維持  ↑過程透明化
 ```
 
 ### 信頼性と安全性
@@ -77,14 +77,9 @@ GSRアプローチ：
 
 現在のLLM推論には複数の構造的課題があります。CoreThink-MCPは、これらの課題に対する学術的解決策を実用化したシステムです。
 
-#### � 従来手法の課題（論文で実証済み）
+#### 📊 従来手法の課題（論文で実証済み）
 
-| 手法 | 主要課題 | 実際の影響 |
-|------|---------|------------|
-| **Test-time Scaling** | Diminishing Returns | 計算コスト増大による効率低下 |
-| **Chain-of-Thought** | Unfaithful Explanations | 医療・法律分野での信頼性問題 |
-| **LLMs/LRMs** | Complexity Cliff | 複雑タスクでの性能急落 |
-| **Neuro-Symbolic AI** | Integration Inconsistencies | symbolic-neural間の整合性課題 |
+CoreThink論文では、現行のLLM推論手法の根本的制約が詳細に分析されています。特に医療・法律等の高信頼性分野において、これらの手法は致命的な信頼性問題を引き起こす可能性が指摘されています。
 
 
 
