@@ -1,8 +1,40 @@
 # 🧠 CoreThink-MCP
 
-**A General Symbolics Reasoning (GSR) powered MCP Server for safe, natural language reasoning in code changes**
+**A Model Context Protocol Server implementing CoreThink's General Symbolics Reasoning for Long Horizon Tasks**
 
-CoreThink-MCP は、[CoreThink論文](https://arxiv.org/abs/2509.00971)で提案された **General Symbolics Reasoning (GSR)** の思想を実装した Model Context Protocol (MCP) サーバーです。LLMが自然言語のまま推論・制約検証・安全実行を行える「外付け推論レイヤー」として機能します。
+CoreThink-MCP は、[CoreThink論文](https://arxiv.org/abs/2509.00971)で提案された **General Symbolics Reasoning (GSR)** を実装した Model Context Protocol (MCP) サーバーです。
+
+## 📖 CoreThinkについて
+
+**CoreThink** は、LLMの長期タスクにおける推論能力を向上させる画期的な推論レイヤーです：
+
+- **🧩 General Symbolics手法**: 従来のテスト時スケーリング、教師ありファインチューニング、強化学習を超えた新しい推論パラダイム
+- **🎯 3つの重要領域**: ツール呼び出し、コード生成、プランニングに特化した設計
+- **📊 SOTA性能達成**: 
+  - LiveCodeBench v6: **66.66%**
+  - Instruction-Following Evals: **89%**
+  - ARC-AGI-2: **24.4%**
+  - S## 🙏 CoreThink論文への謝辞
+
+本プロジェクトは、以下の革新的な研究成果を実装しています：
+
+**"CoreThink: A Symbolic Reasoning Layer to reason over Long Horizon Tasks with LLMs"**  
+*Jay Vaghasiya, Omkar Ghugarkar, Vishvesh Bhat, Vipul Dholaria, Julian McAuley*  
+arXiv:2509.00971v2 [cs.AI] 4 Sep 2025
+
+### 論文の主要貢献
+
+- **🧩 General Symbolics手法**: テスト時スケーリング、SFT、RLVRを超えた新しい推論パラダイム
+- **🎯 3領域特化設計**: ツール呼び出し、コード生成、プランニングに最適化
+- **📊 SOTA性能**: 7つのベンチマークで最先端スコアを達成
+- **💰 ゼロコスト**: ファインチューニングや訓練コストなしで性能向上
+- **🛡️ 純粋性能向上**: モデルの推論精度に悪影響を与えない設計
+
+CoreThink-MCPは、この画期的な **General Symbolics Reasoning** をMCPサーバーとして実装し、論文の成果をより多くの開発者が利用できるようにしています。Lite: **62.3%**
+- **💰 ゼロコスト**: ファインチューニングや訓練コストなしで性能向上を実現
+- **🛡️ 純粋な性能向上**: モデルの推論タスク精度に悪影響を与えない設計
+
+CoreThink-MCPは、この先進的なGeneral Symbolics推論を **MCPサーバー** として実装し、様々なAIアプリケーション（Claude Desktop、VS Code、LM Studio等）で利用可能にします。
 
 ## 📋 目次
 
@@ -18,11 +50,15 @@ CoreThink-MCP は、[CoreThink論文](https://arxiv.org/abs/2509.00971)で提案
 
 ## 🎯 特徴
 
-- **🔍 自然言語内推論**: JSON構造化せず、言語のまま推論過程を保持
+CoreThink-MCPは、論文のGeneral Symbolics Reasoningを実用的なMCPサーバーとして実装：
+
+- **🧩 General Symbolics推論**: CoreThink論文の革新的推論手法をMCPとして実装
+- **🎯 長期タスク対応**: ツール呼び出し、コード生成、プランニングの3領域に特化
 - **🛡️ 制約駆動検証**: constraints.txtによるルールベース安全性チェック  
 - **⚡ サンドボックス実行**: git worktreeによる隔離された安全な変更適用
-- **🔌 広範囲対応**: Claude Desktop、VSCode、Cursor、Kiro、Clineで利用可能
-- **🔄 段階的実行**: dry-run → 検証 → 適用の安全な流れ
+- **🔌 広範囲対応**: Claude Desktop、VS Code、LM Studio、Cursor、Kiro、Clineで利用可能
+- **🔄 段階的実行**: 推論 → 検証 → 安全実行の信頼性の高い流れ
+- **💰 ゼロコスト性能向上**: ファインチューニング不要でLLM性能を向上
 
 ## 🚀 クイックスタート
 
@@ -384,24 +420,33 @@ Ctrl+Shift+P → "MCP: Open Remote User Configuration"
 
 ## 🛠 使用方法
 
-### 基本的な使用例
+### CoreThink General Symbolics Reasoning 使用例
 
-1. **推論開始**
+1. **長期タスクの開始**
    ```
-   ユーザー: "calc.pyのゼロ除算バグを直して"
+   ユーザー: "大規模なリファクタリング: レガシーコードをモダンな設計パターンに変換して"
    ```
 
-2. **システムが自動で推論**
-   - `reason_about_change` で意図分析
-   - `validate_against_constraints` で制約確認
-   - `execute_with_safeguards` で安全実行
+2. **General Symbolics推論の実行**
+   - `reason_about_change`: CoreThinkのGSR手法で複雑な意図を段階的分析
+   - `validate_against_constraints`: 制約適合性を多角的に検証
+   - `execute_with_safeguards`: サンドボックス環境で安全に実行
 
-3. **自然言語での結果**
+3. **長期タスク対応の結果**
    ```
-   【判定】PROCEED
-   【理由】すべての制約に適合
-   【次ステップ】パッチ生成 → 検証 → 適用
+   【General Symbolics判定】PROCEED_WITH_PLANNING
+   【推論段階】
+   1. 現行アーキテクチャ分析完了
+   2. 設計パターン適用可能性評価
+   3. 段階的移行計画策定
+   【次ステップ】Phase 1: Factory Pattern導入 → Phase 2: Observer実装 → 検証
    ```
+
+### CoreThinkの3つの重要領域
+
+- **🔧 ツール呼び出し**: 複数ツールの連携による複雑なタスク実行
+- **💻 コード生成**: 大規模コードベースの一貫性を保った生成・編集
+- **📋 プランニング**: 長期的な開発計画の立案と実行管理
 
 ## 📁 プロジェクト構造
 
