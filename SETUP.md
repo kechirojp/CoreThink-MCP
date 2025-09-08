@@ -204,6 +204,104 @@ Ctrl+Shift+P → "MCP: Open Remote User Configuration"
 - **通知表示**: 移行完了時に説明付き通知
 - **クロスプラットフォーム**: ローカル、リモート、WSL、Codespacesすべて対応
 
+## 🎯 LM Studio設定 (v0.3.17以降対応) 🆕
+
+**LM Studio はローカルLLMとMCPを組み合わせた強力な開発環境を提供します！**
+
+### 1. 基本設定
+
+**必要バージョン**: LM Studio 0.3.17 (b10) 以降
+
+#### 設定手順
+
+1. **LM Studio を起動**
+2. **Program タブ** を開く (右サイドバー)
+3. **Install > Edit mcp.json** をクリック
+4. エディタで以下の設定を追加：
+
+```json
+{
+  "mcpServers": {
+    "corethink-mcp": {
+      "command": "python",
+      "args": ["src/corethink_mcp/server/corethink_server.py"],
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
+    }
+  }
+}
+```
+
+#### UV環境使用の場合
+
+```json
+{
+  "mcpServers": {
+    "corethink-mcp": {
+      "command": "uv",
+      "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
+    }
+  }
+}
+```
+
+### 2. LM Studio の特徴
+
+#### 🖥️ 完全ローカル実行
+- **プライバシー**: データが外部に送信されない
+- **オフライン対応**: インターネット接続不要
+- **高速処理**: ローカルGPUを活用した高速推論
+
+#### 🔧 カスタマイズ性
+- **モデル選択**: Llama, Mistral, CodeLlama など自由選択
+- **パラメータ調整**: Temperature, Top-p, Max tokens などの調整
+- **プリセット**: チーム・プロジェクト別の設定プリセット
+
+#### 🛡️ セキュリティ
+- **コード保護**: コードが外部サービスに送信されない
+- **企業対応**: 機密情報の漏洩リスクなし
+- **アクセス制御**: MCP サーバーの権限管理
+
+### 3. 使用方法
+
+#### チャットでの利用
+
+1. **LM Studio でモデルをロード**
+2. **Chat タブ** でコードに関する質問
+3. **CoreThink-MCP ツール** が自動で利用可能
+4. **GSR推論・制約検証・安全実行** をローカルで実行
+
+#### 推奨モデル
+
+**コード生成・編集向け:**
+- CodeLlama 13B/34B
+- Llama 3.1 8B/70B Instruct
+- Mistral 7B/22B Instruct
+- DeepSeek Coder V2
+
+**日本語対応:**
+- Japanese Stable LM 3B/7B
+- ELYZA japanese-llama-2-7b/13b
+
+### 4. トラブルシューティング
+
+#### よくある問題
+
+**問題1**: MCP サーバーが認識されない
+- **解決策**: `mcp.json` のパス確認、LM Studio 再起動
+
+**問題2**: Python環境が見つからない
+- **解決策**: 仮想環境のアクティベート、絶対パス指定
+
+**問題3**: 権限エラー
+- **解決策**: フォルダー権限確認、管理者権限での実行
+
+#### デバッグ方法
+
+- **ログ確認**: LM Studio の Developer Tools でコンソール確認
+- **手動実行**: ターミナルでMCPサーバーを直接起動してテスト
+- **設定検証**: JSON構文エラーチェック
+
 ## ✅ 動作確認
 
 ### 1. サーバーの手動起動テスト

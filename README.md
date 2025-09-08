@@ -96,6 +96,33 @@ docker-compose up
 - ✅ **Dev Container対応**: `devcontainer.json` での設定可能
 - ✅ **リアルタイム管理**: Start/Stop/Restart、ログ表示、設定確認
 
+#### LM Studio (v0.3.17以降) 🆕
+
+**ローカルLLMとMCPの強力な組み合わせ！**
+
+**設定方法:**
+1. LM Studio で **Program** タブを開く
+2. **Install > Edit mcp.json** をクリック
+3. 以下の設定を追加：
+
+```json
+{
+  "mcpServers": {
+    "corethink-mcp": {
+      "command": "python",
+      "args": ["src/corethink_mcp/server/corethink_server.py"],
+      "cwd": "/absolute/path/to/your/CoreThink-MCP"
+    }
+  }
+}
+```
+
+**特徴:**
+- 🖥️ **完全ローカル**: インターネット不要でプライベート推論
+- ⚡ **高速処理**: ローカルLLMとMCPの直接統合
+- 🛡️ **セキュリティ**: データが外部に送信されない
+- 🔧 **カスタマイズ**: LLMモデルの自由選択
+
 **⚠️ 重要**: `cwd` のパスは必ずあなたの環境に合わせて変更してください。
 
 ## 🛠 利用可能なツール
@@ -205,6 +232,7 @@ MUST: すべてのテストがパスすること
 ## 🤝 対応アプリケーション
 
 - ✅ **VS Code (v1.102以降)** - MCPサポート正式版、管理ビュー対応 🆕
+- ✅ **LM Studio (v0.3.17以降)** - ローカルLLM + MCP統合対応 🆕
 - ✅ **Claude Desktop** - フル機能対応
 - ✅ **Cursor** - MCP統合対応
 - ✅ **Kiro** - コード生成・編集対応
