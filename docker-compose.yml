@@ -1,12 +1,11 @@
 version: '3.8'
 
 services:
-  corethink-mcp:
+  # Local MCP Server (STDIO Transport)
+  corethink-mcp-local:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
     volumes:
       - .:/app
       - ./repo_target:/repo_target  # 対象リポジトリのマウント
@@ -17,6 +16,28 @@ services:
     command: uv run src/corethink_mcp/server/corethink_server.py
     stdin_open: true
     tty: true
+
+  # Remote MCP Server (HTTP Transport)
+  corethink-mcp-remote:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - ./repo_target:/repo_target  # 対象リポジトリのマウント
+    environment:
+      - CORETHINK_REPO_ROOT=/repo_target
+      - CORETHINK_REMOTE_PORT=8080
+      - PYTHONPATH=/app/src
+    working_dir: /app
+    command: uv run src/corethink_mcp/server/remote_server.py
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # 将来のNode.js MCPサーバー（予約）
   # corethink-mcp-node:

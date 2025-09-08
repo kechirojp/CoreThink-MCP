@@ -31,7 +31,44 @@
 - [ ] read_constraints リソース（制約参照）
 - [ ] read_reasoning_log リソース（ログ参照）
 
-## 📋 未着手タスク
+## � 緊急対応項目
+
+### Claude系MCPエコシステム対応 🔥
+
+| 項目 | 説明 | 優先度 | 状況 |
+|------|------|---------|------|
+| Remote MCP対応 | claude.ai Connectorsでの利用を可能にする | 🔥 緊急 | ✅ 完了 |
+| HTTP Transport実装 | aiohttp使用のRemote MCPサーバー | 🔥 緊急 | ✅ 完了 |
+| 自動セットアップツール | 設定ファイル生成の自動化 | 🔥 緊急 | ✅ 完了 |
+| セキュリティ準拠 | Anthropic公式ガイドラインへの対応 | 🔥 緊急 | 🔄 進行中 |
+| OAuth認証システム | Remote MCP用認証機能 | 📋 重要 | 📅 計画中 |
+| VS Code ギャラリー登録 | 公式ディレクトリへの申請 | 📋 重要 | 📅 計画中 |
+
+### 実装済み改善点 ✅
+
+- **Remote MCP Server**: HTTP Transport対応、CORS設定済み
+- **Setup Helper Tool**: 自動設定ファイル生成、Claude Desktop自動インストール
+- **Docker Multi-Service**: Local/Remote MCP両対応
+- **aiohttp依存関係追加**: pyproject.tomlに追加済み
+- **🆕 .DXT Package対応**: Claude Desktopのドラッグ&ドロップインストール対応
+
+### 🚀 新機能: .DXT Package ✅
+
+| 項目 | 説明 | 状況 |
+|------|------|------|
+| .DXT Package作成 | Claude Desktop用ドラッグ&ドロップファイル | ✅ 完了 |
+| DXT仕様準拠 | Anthropic公式DXT仕様v0.0.1に準拠 | ✅ 完了 |
+| マニフェスト設計 | tools, resources, user_config完備 | ✅ 完了 |
+| Setup Helper統合 | `python setup_helper.py dxt`で生成可能 | ✅ 完了 |
+
+**使用方法**:
+```bash
+# .DXTファイル生成
+python setup_helper.py dxt
+# Claude Desktop > 拡張機能 > corethink-mcp.dxt をドラッグ&ドロップ
+```
+
+## �📋 継続中のタスク
 
 ### 🏗 環境構築
 - [x] UV仮想環境作成
@@ -53,6 +90,22 @@
 - [ ] PyPI パッケージ公開
 - [ ] NPM パッケージ公開（Node.js版）
 - [ ] Docker Hub イメージ公開
+
+### 🌍 多言語対応 🆕
+- [ ] **英語版README作成** (`README_EN.md`)
+  - 国際的なユーザーベース拡大
+  - GitHubでの検索・発見性向上
+  - CoreThink論文の正確な英語説明
+- [ ] **中国語版README作成** (`README_CN.md`)
+  - 中国語圏のデベロッパー対応
+  - 技術文書の中国語ローカライゼーション
+  - 簡体字・繁体字両対応検討
+
+### 🔧 システム改善 🆕
+- [ ] **ポート自動変更機能**
+  - ポート8080競合時の自動ポート検出
+  - 利用可能ポートの自動選択機能
+  - ポート変更時のログ出力・通知
 
 ### 🧪 テスト実装
 - [ ] 単体テスト作成（pytest）

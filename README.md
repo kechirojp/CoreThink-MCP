@@ -14,23 +14,7 @@ CoreThink-MCP は、[CoreThink論文](https://arxiv.org/abs/2509.00971)で提案
   - LiveCodeBench v6: **66.66%**
   - Instruction-Following Evals: **89%**
   - ARC-AGI-2: **24.4%**
-  - S## 🙏 CoreThink論文への謝辞
-
-本プロジェクトは、以下の革新的な研究成果を実装しています：
-
-**"CoreThink: A Symbolic Reasoning Layer to reason over Long Horizon Tasks with LLMs"**  
-*Jay Vaghasiya, Omkar Ghugarkar, Vishvesh Bhat, Vipul Dholaria, Julian McAuley*  
-arXiv:2509.00971v2 [cs.AI] 4 Sep 2025
-
-### 論文の主要貢献
-
-- **🧩 General Symbolics手法**: テスト時スケーリング、SFT、RLVRを超えた新しい推論パラダイム
-- **🎯 3領域特化設計**: ツール呼び出し、コード生成、プランニングに最適化
-- **📊 SOTA性能**: 7つのベンチマークで最先端スコアを達成
-- **💰 ゼロコスト**: ファインチューニングや訓練コストなしで性能向上
-- **🛡️ 純粋性能向上**: モデルの推論精度に悪影響を与えない設計
-
-CoreThink-MCPは、この画期的な **General Symbolics Reasoning** をMCPサーバーとして実装し、論文の成果をより多くの開発者が利用できるようにしています。Lite: **62.3%**
+  - SWE-Bench Lite: **62.3%**
 - **💰 ゼロコスト**: ファインチューニングや訓練コストなしで性能向上を実現
 - **🛡️ 純粋な性能向上**: モデルの推論タスク精度に悪影響を与えない設計
 
@@ -39,10 +23,9 @@ CoreThink-MCPは、この先進的なGeneral Symbolics推論を **MCPサーバ�
 ## 📋 目次
 
 - [🎯 特徴](#-特徴)
-- [🚀 クイックスタート](#-クイックスタート)
+- [🚀 インストール方法](#-インストール方法)
 - [📱 アプリケーション設定](#-アプリケーション設定)
 - [🛠 利用可能なツール](#-利用可能なツール)
-- [⚙️ 高度な設定](#️-高度な設定)
 - [🔧 トラブルシューティング](#-トラブルシューティング)
 - [📁 プロジェクト構造](#-プロジェクト構造)
 - [🧪 開発・ロードマップ](#-開発ロードマップ)
@@ -60,13 +43,100 @@ CoreThink-MCPは、論文のGeneral Symbolics Reasoningを実用的なMCPサー�
 - **🔄 段階的実行**: 推論 → 検証 → 安全実行の信頼性の高い流れ
 - **💰 ゼロコスト性能向上**: ファインチューニング不要でLLM性能を向上
 
-## 🚀 クイックスタート
+## 🚀 インストール方法
 
-### 1. インストール
+### 📋 どの方法を選ぶべきか？
 
-#### 🚀 UV環境での推奨インストール
+| 対象アプリ | 推奨方法 | 所要時間 | 技術レベル |
+|-----------|---------|----------|------------|
+| **Claude Desktop** | 🥇 .DXTドラッグ&ドロップ | 1分 | 初心者 |
+| **VS Code/LM Studio** | 🥈 自動セットアップ | 5分 | 初級者 |
+| **カスタマイズ必要** | 🥉 手動設定 | 15分 | 中級者 |
+| **本格運用・Web版** | 🔧 Docker・Remote | 30分 | 上級者 |
 
-UVは最新のPython依存関係管理ツールで、高速で安全な環境構築が可能です。
+---
+
+### 🥇 方法1: .DXTドラッグ&ドロップ【Claude Desktop限定・最簡単】
+
+**最も簡単で、技術的知識は一切不要です！**
+
+```bash
+# 1. リポジトリをクローン
+git clone https://github.com/kechirojp/CoreThink-MCP.git
+cd CoreThink-MCP
+
+# 2. .DXTパッケージを生成
+python setup_helper.py dxt
+
+# 3. Claude Desktopでインストール
+# - Claude Desktopを開く
+# - 設定 → 拡張機能/Extensions
+# - corethink-mcp.dxt をドラッグ&ドロップ
+# - 完了！
+```
+
+**✅ 成功した場合**: Claude Desktopでツールが利用可能になります  
+**❌ 失敗した場合**: [方法2の自動セットアップ](#🥈-方法2-自動セットアップツール全アプリ対応推奨)をお試しください
+
+---
+
+### 🥈 方法2: 自動セットアップツール【全アプリ対応・推奨】
+
+**setup_helper.pyが自動で環境構築・設定ファイル生成を行います**
+
+#### ステップ1: 基本環境構築
+
+```bash
+# リポジトリをクローン
+git clone https://github.com/kechirojp/CoreThink-MCP.git
+cd CoreThink-MCP
+
+# 基本セットアップ
+python setup_helper.py examples  # 設定例ファイル生成
+```
+
+#### ステップ2: アプリ別自動インストール
+
+**Claude Desktop（UV環境）**:
+```bash
+python setup_helper.py install-uv
+```
+
+**Claude Desktop（標準Python）**:
+```bash
+python setup_helper.py install-python
+```
+
+**VS Code**:
+```bash
+python setup_helper.py install-vscode
+```
+
+**LM Studio**:
+```bash
+python setup_helper.py install-lmstudio
+```
+
+**✅ 成功した場合**: 各アプリでツールが利用可能になります  
+**❌ 失敗した場合**: [方法3の手動設定](#🥉-方法3-手動設定カスタマイズ必要時)をお試しください
+
+#### UV環境の利点（推奨）
+
+- ⚡ **高速インストール**: pip比で10-100x高速
+- 🔒 **一貫性保証**: `uv.lock`によるバージョン固定
+- 🧹 **クリーンな依存関係**: 不要パッケージの自動除外
+- 🔄 **高速リビルド**: キャッシュによる差分インストール
+
+---
+
+### 🥉 方法3: 手動設定【カスタマイズ必要時】
+
+**自動セットアップが失敗した場合や、特定の設定が必要な場合**
+
+#### ステップ1: 環境構築
+
+<details>
+<summary>🚀 UV環境（推奨）</summary>
 
 ```bash
 # リポジトリをクローン
@@ -80,14 +150,14 @@ uv venv --python 3.11.12
 # macOS/Linux  
 source .venv/bin/activate
 
-# 依存関係インストール（UV推奨）
+# 依存関係インストール
 uv add mcp[cli] fastmcp pyyaml gitpython python-dotenv
-
-# または requirements.txt 使用の場合
-uv pip install -r requirements.txt
 ```
 
-#### 🐍 標準Python環境
+</details>
+
+<details>
+<summary>🐍 標準Python環境</summary>
 
 ```bash
 # リポジトリをクローン
@@ -105,68 +175,69 @@ source .venv/bin/activate
 pip install mcp[cli] fastmcp pyyaml gitpython python-dotenv
 ```
 
-**💡 UV環境の利点:**
-- ⚡ **高速インストール**: pip比で10-100x高速
-- 🔒 **一貫性保証**: `uv.lock`によるバージョン固定
-- 🧹 **クリーンな依存関係**: 不要パッケージの自動除外
-- 🔄 **高速リビルド**: キャッシュによる差分インストール
+</details>
 
-### 2. サーバー起動
+#### ステップ2: アプリ別設定
 
-#### UV環境での起動（推奨）
+設定方法は[📱 アプリケーション設定](#-アプリケーション設定)セクションをご確認ください。
 
-```bash
-# 仮想環境アクティベート
-# Windows
-.venv\Scripts\activate
-# macOS/Linux  
-source .venv/bin/activate
+---
 
-# UV環境でサーバー起動
-uv run python src/corethink_mcp/server/corethink_server.py
+### 🔧 方法4: 上級者向け【Docker・Remote MCP】
 
-# または開発モードで起動
-uv run --dev python src/corethink_mcp/server/corethink_server.py
-```
-
-#### 標準Python環境での起動
-
-```bash
-# 仮想環境アクティベート
-# Windows
-.venv\Scripts\activate
-# macOS/Linux
-source .venv/bin/activate
-
-# サーバー起動
-python src/corethink_mcp/server/corethink_server.py
-```
+**本格運用・Web版claude.ai・企業環境での利用**
 
 #### Docker起動
 
 ```bash
-# Docker Compose使用
-docker-compose up
+# Local MCP起動
+docker-compose up corethink-mcp-local
 
-# 単体Docker起動
+# Remote MCP起動
+docker-compose up corethink-mcp-remote
+
+# 単体Docker起動（Remote MCP）
 docker build -t corethink-mcp .
 docker run -p 8080:8080 corethink-mcp
 ```
 
-### 3. MCP接続設定
+#### Remote MCP起動（claude.ai web版）
+
+```bash
+# 仮想環境アクティベート
+source .venv/bin/activate  # Linux/macOS
+.venv\Scripts\activate     # Windows
+
+# Remote MCPサーバー起動
+uv run python src/corethink_mcp/server/remote_server.py
+
+# または標準Python環境で
+python src/corethink_mcp/server/remote_server.py
+```
+
+**claude.aiで設定**:
+- [Settings > Connectors](https://claude.ai/settings/connectors) にアクセス
+- "Add custom connector" をクリック
+- URL: `http://localhost:8080/mcp` を入力
+- "Add" をクリックして接続
+
+---
 
 ## 📱 アプリケーション設定
 
-<details>
-<summary>🎭 Claude Desktop 設定</summary>
+### 🎭 Claude Desktop
 
-### 設定ファイルの場所
+**🆕 .DXTドラッグ&ドロップの場合**: すでに設定済みです！
+
+**手動設定の場合**:
+
+#### 設定ファイルの場所
 
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Linux**: `~/.config/claude/claude_desktop_config.json`
 
-### UV環境の場合（推奨）
+#### UV環境の場合（推奨）
 
 ```json
 {
@@ -180,7 +251,7 @@ docker run -p 8080:8080 corethink-mcp
 }
 ```
 
-### 標準Python環境の場合
+#### 標準Python環境の場合
 
 ```json
 {
@@ -197,8 +268,6 @@ docker run -p 8080:8080 corethink-mcp
 }
 ```
 
-### パス設定の重要事項
-
 **⚠️ 重要**: 必ず以下の点を確認してください：
 
 1. `cwd` フィールドには、CoreThink-MCPプロジェクトの**絶対パス**を指定
@@ -207,14 +276,30 @@ docker run -p 8080:8080 corethink-mcp
    - **macOS/Linux**: `/home/yourname/CoreThink-MCP`
 3. 仮想環境を使用する場合は、`env.PATH` を適切に設定
 
-</details>
+---
 
-<details>
-<summary>💻 VS Code (v1.102以降) 設定</summary>
+### 🌐 claude.ai (Remote MCP)
+
+Remote MCPサーバーを起動してWeb版Claudeで利用：
+
+1. **Remote MCPサーバーを起動**:
+   ```bash
+   uv run python src/corethink_mcp/server/remote_server.py
+   ```
+
+2. **claude.aiで設定**:
+   - [Settings > Connectors](https://claude.ai/settings/connectors) にアクセス
+   - "Add custom connector" をクリック
+   - URL: `http://localhost:8080/mcp` を入力
+   - "Add" をクリックして接続
+
+---
+
+### 💻 VS Code (v1.102以降)
 
 **🎉 MCPサポートが正式版になりました！** VS Code 1.102以降では、MCPサーバーを公式サポートしており、以下の方法で簡単にインストール・管理できます：
 
-### 推奨方法: MCP Servers ギャラリー 🆕
+#### 推奨方法: MCP Servers ギャラリー 🆕
 
 VS Code 1.102以降では、MCP Serversの管理が大幅に簡単になりました：
 
@@ -226,9 +311,8 @@ VS Code 1.102以降では、MCP Serversの管理が大幅に簡単になりま�
 
 > **📝 注意**: 現在ギャラリーへの登録を準備中です。登録完了まで手動設定をご利用ください。
 
-### 手動設定方法
+#### 手動設定方法
 
-#### 設定ファイルアクセス
 ```bash
 # ユーザー設定ファイルを開く
 Ctrl+Shift+P → "MCP: Open User Configuration"
@@ -237,7 +321,7 @@ Ctrl+Shift+P → "MCP: Open User Configuration"
 Ctrl+Shift+P → "MCP: Open Remote User Configuration"
 ```
 
-#### UV環境使用の場合（推奨）
+**UV環境使用の場合（推奨）**:
 ```json
 {
   "servers": {
@@ -250,7 +334,7 @@ Ctrl+Shift+P → "MCP: Open Remote User Configuration"
 }
 ```
 
-#### 標準Python環境使用の場合
+**標準Python環境使用の場合**:
 ```json
 {
   "servers": {
@@ -263,61 +347,13 @@ Ctrl+Shift+P → "MCP: Open Remote User Configuration"
 }
 ```
 
-### 新機能 (VS Code 1.102+)
+---
 
-#### MCP Servers 管理ビュー
-- **Extensions ビュー** → **MCP SERVERS - INSTALLED** セクション
-- 各サーバーの状態管理：
-  - ✅ Start Server / Stop Server / Restart Server
-  - 📋 Show Output (ログ表示)
-  - ⚙️ Show Configuration (設定表示)
-  - 🔗 Configure Model Access (モデルアクセス管理)
-  - 📊 Show Sampling Requests (デバッグ用)
-  - 📁 Browse Resources (リソース参照)
-  - 🗑️ Uninstall (アンインストール)
-
-#### Dev Container対応
-`devcontainer.json` で直接MCP設定が可能：
-
-```json
-{
-  "image": "mcr.microsoft.com/devcontainers/python:latest",
-  "customizations": {
-    "vscode": {
-      "mcp": {
-        "servers": {
-          "corethink-mcp": {
-            "command": "python",
-            "args": ["src/corethink_mcp/server/corethink_server.py"],
-            "cwd": "/workspaces/CoreThink-MCP"
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-#### プロファイル対応
-- 各VS Codeプロファイルごとに異なるMCPサーバー設定が可能
-- Settings Syncでプロファイル間での設定同期対応
-- チーム・プロジェクト別のMCPサーバー構成管理
-
-#### 移行サポート
-既存の `settings.json` にMCP設定がある場合：
-- **自動検出**: VS Codeが既存設定を自動で検出
-- **リアルタイム移行**: 新しい `mcp.json` 形式に自動変換
-- **通知表示**: 移行完了時に説明付き通知
-- **クロスプラットフォーム**: ローカル、リモート、WSL、Codespacesすべて対応
-
-</details>
-
-<details>
-<summary>🖥️ LM Studio (v0.3.17以降) 設定</summary>
+### 🖥️ LM Studio (v0.3.17以降)
 
 **LM Studio はローカルLLMとMCPを組み合わせた強力な開発環境を提供します！**
 
-### ワンクリックインストール 🚀
+#### ワンクリックインストール 🚀
 
 **最も簡単な方法:** ボタンをクリックして自動インストール
 
@@ -331,11 +367,10 @@ Ctrl+Shift+P → "MCP: Open Remote User Configuration"
 
 **⚠️ 重要**: インストール後、LM Studio で `cwd` のパスを必ずあなたの環境に合わせて変更してください。
 
-### 手動設定
+#### 手動設定
 
 **必要バージョン**: LM Studio 0.3.17 (b10) 以降
 
-#### 設定手順
 1. **LM Studio を起動**
 2. **Program タブ** を開く (右サイドバー)
 3. **Install > Edit mcp.json** をクリック
@@ -353,7 +388,7 @@ Ctrl+Shift+P → "MCP: Open Remote User Configuration"
 }
 ```
 
-#### UV環境使用の場合
+**UV環境使用の場合**:
 ```json
 {
   "mcpServers": {
@@ -366,44 +401,7 @@ Ctrl+Shift+P → "MCP: Open Remote User Configuration"
 }
 ```
 
-### LM Studio の特徴
-
-#### 完全ローカル実行
-- **プライバシー**: データが外部に送信されない
-- **オフライン対応**: インターネット接続不要
-- **高速処理**: ローカルGPUを活用した高速推論
-
-#### カスタマイズ性
-- **モデル選択**: Llama, Mistral, CodeLlama など自由選択
-- **パラメータ調整**: Temperature, Top-p, Max tokens などの調整
-- **プリセット**: チーム・プロジェクト別の設定プリセット
-
-#### セキュリティ
-- **コード保護**: コードが外部サービスに送信されない
-- **企業対応**: 機密情報の漏洩リスクなし
-- **アクセス制御**: MCP サーバーの権限管理
-
-### 使用方法
-
-#### チャットでの利用
-1. **LM Studio でモデルをロード**
-2. **Chat タブ** でコードに関する質問
-3. **CoreThink-MCP ツール** が自動で利用可能
-4. **GSR推論・制約検証・安全実行** をローカルで実行
-
-#### 推奨モデル
-
-**コード生成・編集向け:**
-- CodeLlama 13B/34B
-- Llama 3.1 8B/70B Instruct
-- Mistral 7B/22B Instruct
-- DeepSeek Coder V2
-
-**日本語対応:**
-- Japanese Stable LM 3B/7B
-- ELYZA japanese-llama-2-7b/13b
-
-</details>
+---
 
 ## 🛠 利用可能なツール
 
@@ -448,50 +446,13 @@ Ctrl+Shift+P → "MCP: Open Remote User Configuration"
 - **💻 コード生成**: 大規模コードベースの一貫性を保った生成・編集
 - **📋 プランニング**: 長期的な開発計画の立案と実行管理
 
-## 📁 プロジェクト構造
-
-```
-corethink-mcp/
-├── src/corethink_mcp/          # メインパッケージ
-│   ├── server/                 # MCPサーバー
-│   │   ├── corethink_server.py # メインサーバー
-│   │   └── utils.py           # ユーティリティ
-│   └── constraints.txt        # 制約ルール
-├── conf/base/                 # 設定ファイル
-├── logs/                      # ログ出力
-├── .github/                   # GitHub設定
-│   └── copilot-instructions.md # Copilot向けルール
-├── pyproject.toml             # プロジェクト設定
-└── docker-compose.yml         # Docker設定
-```
-
-## 🔧 設定
-
-## ⚙️ 高度な設定
-
-### 環境変数 (.env)
-
-```bash
-CORETHINK_REPO_ROOT=.              # 対象リポジトリ
-CORETHINK_LOG_LEVEL=INFO           # ログレベル
-CORETHINK_PORT=8080                # サーバーポート
-CORETHINK_SANDBOX_DIR=.sandbox     # サンドボックス名
-```
-
-### 制約ファイル (constraints.txt)
-
-```txt
-MUST: 公開APIの変更を禁止
-NEVER: printやconsole.logなどのデバッグ出力を追加しない
-SHOULD: 関数変更時はdocstringを更新する
-MUST: すべてのテストがパスすること
-```
+---
 
 ## 🔧 トラブルシューティング
 
-### 動作確認
+### 動作確認方法
 
-#### サーバーの手動起動テスト
+#### 1. サーバーの手動起動テスト
 
 ```bash
 # プロジェクトディレクトリで実行
@@ -505,7 +466,7 @@ uv run python src/corethink_mcp/server/corethink_server.py
 .venv\Scripts\python src/corethink_mcp/server/corethink_server.py  # Windows
 ```
 
-#### MCPテストクライアント
+#### 2. MCPテストクライアント
 
 ```bash
 python test_mcp_client.py
@@ -580,6 +541,26 @@ pip install -e .
 2. `mcp.json` の構文確認
 3. フォルダー権限の確認
 
+#### 問題6: ポート競合エラー 🆕
+
+**原因**: デフォルトポート8080が他のアプリケーションで使用中
+
+**現象**:
+```
+Address already in use: bind: :8080
+```
+
+**解決策**:
+- **自動解決**: CoreThink-MCPは自動的に利用可能なポートを検索
+- **手動設定**: 環境変数 `CORETHINK_PORT=9090` で固定ポート指定
+- **ポート確認**: ログで実際に使用されているポートを確認
+
+**よくあるポート競合**:
+- **8080**: Tomcat、Spring Boot、Jenkins
+- **8081**: 多くの開発サーバー
+- **8082**: 代替ポート
+- **解決**: 自動的に8083以降を検索
+
 ### デバッグ方法
 
 - **ログ確認**: `logs/trace.log` でサーバーログを確認
@@ -596,6 +577,54 @@ pip install -e .
 - 使用した設定ファイル（パスは伏字で）
 
 [GitHub Issues](https://github.com/kechirojp/CoreThink-MCP/issues)
+
+---
+
+## ⚙️ 高度な設定
+
+### 環境変数 (.env)
+
+```bash
+CORETHINK_REPO_ROOT=.              # 対象リポジトリ
+CORETHINK_LOG_LEVEL=INFO           # ログレベル
+CORETHINK_PORT=8080                # サーバーポート（使用中の場合は自動変更）
+CORETHINK_SANDBOX_DIR=.sandbox     # サンドボックス名
+```
+
+**💡 ポート自動変更機能**: 
+- デフォルトポート8080が使用中の場合、自動的に利用可能なポートを検索
+- 8081, 8082... と順次試行し、利用可能なポートを自動選択
+- 変更されたポートはログに出力され、設定更新の案内も表示
+
+### 制約ファイル (constraints.txt)
+
+```txt
+MUST: 公開APIの変更を禁止
+NEVER: printやconsole.logなどのデバッグ出力を追加しない
+SHOULD: 関数変更時はdocstringを更新する
+MUST: すべてのテストがパスすること
+```
+
+---
+
+## 📁 プロジェクト構造
+
+```
+corethink-mcp/
+├── src/corethink_mcp/          # メインパッケージ
+│   ├── server/                 # MCPサーバー
+│   │   ├── corethink_server.py # メインサーバー
+│   │   └── utils.py           # ユーティリティ
+│   └── constraints.txt        # 制約ルール
+├── conf/base/                 # 設定ファイル
+├── logs/                      # ログ出力
+├── .github/                   # GitHub設定
+│   └── copilot-instructions.md # Copilot向けルール
+├── pyproject.toml             # プロジェクト設定
+└── docker-compose.yml         # Docker設定
+```
+
+---
 
 ## 🧪 開発・ロードマップ
 
@@ -614,6 +643,8 @@ pip install -e .
 - [ ] Phase 4: MLflow連携での性能測定
 - [ ] Phase 5: PyPI公開
 
+---
+
 ## 🤝 対応アプリケーション
 
 - ✅ **VS Code (v1.102以降)** - MCPサポート正式版、管理ビュー対応 🆕
@@ -623,6 +654,8 @@ pip install -e .
 - ✅ **Kiro** - コード生成・編集対応
 - ✅ **Cline** - AI開発アシスタント対応
 
+---
+
 ## 📊 性能・検証
 
 - **SWE-Bench Lite**: 目標正解率62.3%以上
@@ -631,15 +664,27 @@ pip install -e .
 
 性能測定結果は [MLflow](https://mlflow.org/) で追跡し、随時更新されます。
 
-## � CoreThink論文への謝辞
+---
 
-本プロジェクトは、以下の研究成果にインスパイアされています：
+## 🙏 CoreThink論文への謝辞
+
+本プロジェクトは、以下の革新的な研究成果を実装しています：
 
 **"CoreThink: A Symbolic Reasoning Layer to reason over Long Horizon Tasks with LLMs"**  
 *Jay Vaghasiya, Omkar Ghugarkar, Vishvesh Bhat, Vipul Dholaria, Julian McAuley*  
 arXiv:2509.00971v2 [cs.AI] 4 Sep 2025
 
-CoreThink論文で提案された **General Symbolics Reasoning (GSR)** フレームワークの実装により、LLMの「チェーン・オブ・ソート（CoT）」の限界を克服し、自然言語内での正確で透明な推論を実現しています。
+### 論文の主要貢献
+
+- **🧩 General Symbolics手法**: テスト時スケーリング、SFT、RLVRを超えた新しい推論パラダイム
+- **🎯 3領域特化設計**: ツール呼び出し、コード生成、プランニングに最適化
+- **📊 SOTA性能**: 7つのベンチマークで最先端スコアを達成
+- **💰 ゼロコスト**: ファインチューニングや訓練コストなしで性能向上
+- **🛡️ 純粋性能向上**: モデルの推論精度に悪影響を与えない設計
+
+CoreThink-MCPは、この画期的な **General Symbolics Reasoning** をMCPサーバーとして実装し、論文の成果をより多くの開発者が利用できるようにしています。
+
+---
 
 ## 📄 ライセンス
 
@@ -653,6 +698,8 @@ CoreThink論文で提案された **General Symbolics Reasoning (GSR)** フレ�
 - ⚠️ **MIT License表示**: ライセンス表示の保持が必要
 - ⚠️ **免責事項**: 作者は一切の保証・責任を負いません
 
+---
+
 ## 🤝 コントリビューション
 
 コントリビューションを歓迎します！以下のガイドラインに従ってください：
@@ -664,6 +711,8 @@ CoreThink論文で提案された **General Symbolics Reasoning (GSR)** フレ�
 
 詳細は [CONTRIBUTING.md](CONTRIBUTING.md) をご覧ください。
 
+---
+
 ## 🔗 関連リンク
 
 - **論文**: [CoreThink: A Symbolic Reasoning Layer](https://arxiv.org/abs/2509.00971)
@@ -671,9 +720,13 @@ CoreThink論文で提案された **General Symbolics Reasoning (GSR)** フレ�
 - **FastMCP**: [FastMCP Framework](https://gofastmcp.com/)
 - **プロジェクトドキュメント**: [詳細ドキュメント](./docs/)
 
+---
+
 ## 🏷️ タグ
 
 `#MCP` `#ModelContextProtocol` `#GSR` `#GeneralSymbolics` `#CoreThink` `#NaturalLanguageReasoning` `#SafeLLM` `#GitHubCopilot` `#ClaudeDesktop` `#VSCode` `#Python` `#FastMCP`
+
+---
 
 ## 📞 サポート
 

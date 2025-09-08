@@ -6,6 +6,7 @@ GSRに基づく自然言語推論MCPサーバー
 import logging
 import os
 import sys
+import socket
 from pathlib import Path
 from typing import Any, Dict, List
 import asyncio
@@ -14,6 +15,13 @@ from dotenv import load_dotenv
 
 # 環境変数の読み込み
 load_dotenv()
+
+# プロジェクトディレクトリを取得してパッケージルートをsys.pathに追加
+project_root = Path(__file__).parent.parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from src.corethink_mcp import get_version_info
 
 # FastMCP の import
 try:
@@ -34,16 +42,51 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def find_available_port(preferred_port: int = 8080, max_attempts: int = 100) -> int:
+    """
+    利用可能なポートを検索する
+    
+    Args:
+        preferred_port: 優先ポート番号（デフォルト: 8080）
+        max_attempts: 最大試行回数
+    
+    Returns:
+        利用可能なポート番号
+    """
+    for port in range(preferred_port, preferred_port + max_attempts):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.bind(('localhost', port))
+                if port != preferred_port:
+                    logger.warning(f"ポート {preferred_port} は使用中です。ポート {port} を使用します。")
+                else:
+                    logger.info(f"ポート {port} が利用可能です。")
+                return port
+        except socket.error:
+            continue
+    
+    # すべて失敗した場合はランダムポートを使用
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(('localhost', 0))
+        port = sock.getsockname()[1]
+        logger.warning(f"ポート {preferred_port}～{preferred_port + max_attempts} は全て使用中です。ランダムポート {port} を使用します。")
+        return port
+
 # プロジェクト設定
 REPO_ROOT = Path(os.getenv("CORETHINK_REPO_ROOT", "."))
 CONSTRAINTS_FILE = Path(__file__).parent.parent / "constraints.txt"
 SANDBOX_DIR = os.getenv("CORETHINK_SANDBOX_DIR", ".sandbox")
 
+# ポート設定（自動検出）
+PREFERRED_PORT = int(os.getenv("CORETHINK_PORT", "8080"))
+AVAILABLE_PORT = find_available_port(PREFERRED_PORT)
+
 # FastMCPアプリケーションの初期化
 if FastMCP:
+    version_info = get_version_info()
     app = FastMCP(
         name="corethink-mcp",
-        version="0.1.0"
+        version=version_info["version"]
     )
 else:
     # 代替実装
@@ -214,9 +257,18 @@ if __name__ == "__main__":
         print("FastMCP が利用できません。MCPパッケージを確認してください。", file=sys.stderr)
         exit(1)
     
-    logger.info("CoreThink-MCP サーバーを起動中...")
+    # バージョン情報表示
+    version_info = get_version_info()
+    logger.info(f"CoreThink-MCP サーバー v{version_info['version']} を起動中...")
+    logger.info(f"CoreThink論文: {version_info['paper']}")
     logger.info(f"制約ファイル: {CONSTRAINTS_FILE}")
     logger.info(f"リポジトリルート: {REPO_ROOT}")
+    logger.info(f"使用ポート: {AVAILABLE_PORT}")
+    
+    # ポート変更があった場合の警告
+    if AVAILABLE_PORT != PREFERRED_PORT:
+        logger.warning(f"注意: 希望ポート {PREFERRED_PORT} は使用中のため、ポート {AVAILABLE_PORT} を使用します")
+        logger.info(f"設定を更新するには、環境変数 CORETHINK_PORT={AVAILABLE_PORT} を設定してください")
     
     # FastMCPサーバーを実行
     app.run()

@@ -1,7 +1,7 @@
 [project]
 name = "corethink-mcp"
-version = "0.1.0"
-description = "A GSR-powered MCP server for safe, natural language reasoning in code changes"
+version = "1.0.0"
+description = "A CoreThink General Symbolics Reasoning MCP server for long horizon tasks"
 requires-python = ">=3.11.12,<3.12"
 dependencies = [
     "mcp[cli]>=0.2.0",
@@ -9,6 +9,7 @@ dependencies = [
     "pyyaml>=6.0",
     "gitpython>=3.1.43",
     "python-dotenv>=1.0.1",
+    "aiohttp>=3.8.0",
 ]
 
 [build-system]

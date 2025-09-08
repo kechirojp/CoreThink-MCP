@@ -1,0 +1,190 @@
+{
+  "dxt_version": "0.0.1",
+  "name": "CoreThink-MCP",
+  "displayName": "CoreThink-MCP",
+  "description": "A Model Context Protocol Server implementing CoreThink's General Symbolics Reasoning for Long Horizon Tasks",
+  "version": "1.0.0",
+  "author": "kechirojp",
+  "license": "MIT",
+  "homepage": "https://github.com/kechirojp/CoreThink-MCP",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kechirojp/CoreThink-MCP.git"
+  },
+  "keywords": [
+    "MCP",
+    "CoreThink",
+    "General Symbolics Reasoning",
+    "GSR",
+    "AI",
+    "LLM",
+    "Code Generation",
+    "Planning",
+    "Tool Calling"
+  ],
+  "categories": [
+    "AI",
+    "Development",
+    "Programming Languages"
+  ],
+  "icon": "🧠",
+  "permissions": [
+    "read_clipboard",
+    "network",
+    "filesystem"
+  ],
+  "server": {
+    "type": "python",
+    "entry_point": "src/corethink_mcp/server/corethink_server.py",
+    "install_command": "uv add mcp[cli] fastmcp pyyaml gitpython python-dotenv aiohttp"
+  },
+  "user_config": {
+    "corethink_repo_root": {
+      "type": "string",
+      "description": "Target repository root path",
+      "default": "."
+    },
+    "corethink_port": {
+      "type": "number",
+      "description": "Server port (auto-detection enabled)",
+      "default": 8080
+    },
+    "corethink_log_level": {
+      "type": "string",
+      "description": "Log level",
+      "default": "INFO",
+      "enum": [
+        "DEBUG",
+        "INFO",
+        "WARNING",
+        "ERROR"
+      ]
+    },
+    "corethink_sandbox_dir": {
+      "type": "string",
+      "description": "Sandbox directory for safe execution",
+      "default": ".sandbox"
+    }
+  },
+  "tools": [
+    {
+      "name": "reason_about_change",
+      "description": "GSRに則った自然言語による推論。制約・矛盾・リスクを言語で評価。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "user_intent": {
+            "type": "string",
+            "description": "ユーザーの意図"
+          },
+          "current_state": {
+            "type": "string",
+            "description": "現在の状態"
+          },
+          "proposed_action": {
+            "type": "string",
+            "description": "提案されたアクション"
+          }
+        },
+        "required": [
+          "user_intent",
+          "current_state",
+          "proposed_action"
+        ]
+      }
+    },
+    {
+      "name": "validate_against_constraints",
+      "description": "提案された変更が制約に違反していないか、自然言語で検証。",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "proposed_change": {
+            "type": "string",
+            "description": "提案された変更"
+          },
+          "reasoning_context": {
+            "type": "string",
+            "description": "推論コンテキスト（オプション）"
+          }
+        },
+        "required": [
+          "proposed_change"
+        ]
+      }
+    },
+    {
+      "name": "execute_with_safeguards",
+      "description": "安全に変更を適用（サンドボックス環境で）",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action_description": {
+            "type": "string",
+            "description": "アクションの説明"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "description": "ドライランかどうか",
+            "default": true
+          }
+        },
+        "required": [
+          "action_description"
+        ]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "uri": "file://constraints",
+      "name": "CoreThink制約ファイル",
+      "description": "CoreThink-MCPの安全制約定義",
+      "mimeType": "text/plain"
+    },
+    {
+      "uri": "file://reasoning_log",
+      "name": "推論ログ",
+      "description": "CoreThink推論プロセスのログ",
+      "mimeType": "text/plain"
+    }
+  ],
+  "requirements": {
+    "python": ">=3.11.12",
+    "dependencies": [
+      "mcp[cli]>=0.2.0",
+      "fastmcp>=0.1.3",
+      "pyyaml>=6.0",
+      "gitpython>=3.1.43",
+      "python-dotenv>=1.0.1",
+      "aiohttp>=3.8.0"
+    ]
+  },
+  "capabilities": {
+    "reasoning": {
+      "general_symbolics": true,
+      "long_horizon_tasks": true,
+      "constraint_validation": true,
+      "sandbox_execution": true
+    },
+    "integration": {
+      "claude_desktop": true,
+      "vscode": true,
+      "lm_studio": true,
+      "remote_mcp": true
+    },
+    "security": {
+      "safe_execution": true,
+      "constraint_checking": true,
+      "sandbox_isolation": true,
+      "dry_run_mode": true
+    }
+  },
+  "documentation": {
+    "quickstart": "README.md",
+    "setup_guide": "SETUP.md",
+    "requirements": "REQUIREMENTS.md",
+    "implementation_plan": "IMPLEMENTATION_PLAN.md"
+  },
+  "corethink_paper": "arXiv:2509.00971v2 - General Symbolics Reasoning (GSR)"
+}
