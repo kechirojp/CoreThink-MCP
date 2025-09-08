@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "corethink-mcp": {
+      "command": "uv",
+      "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
+      "cwd": "/path/to/your/CoreThink-MCP"
+    }
+  }
+}

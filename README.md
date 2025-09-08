@@ -36,7 +36,9 @@ python src/corethink_mcp/server/corethink_server.py
 
 ### 3. Claude Desktopで使用
 
-`claude_desktop_config.json` に追加：
+**詳細なセットアップ手順は [SETUP.md](SETUP.md) を参照してください。**
+
+基本設定例（`claude_desktop_config.json`）：
 
 ```json
 {
@@ -44,7 +46,27 @@ python src/corethink_mcp/server/corethink_server.py
     "corethink-mcp": {
       "command": "python",
       "args": ["src/corethink_mcp/server/corethink_server.py"],
-      "cwd": "/path/to/CoreThink-MCP"
+      "cwd": "/absolute/path/to/your/CoreThink-MCP"
+    }
+  }
+}
+```
+
+**⚠️ 重要**: `cwd` のパスは必ずあなたの環境に合わせて変更してください。
+
+**重要**: `cwd` フィールドは必ずあなたの環境でのCoreThink-MCPプロジェクトの**絶対パス**に変更してください。
+
+### UV使用の場合
+
+UV環境を使用する場合は、以下の設定を使用してください：
+
+```json
+{
+  "mcpServers": {
+    "corethink-mcp": {
+      "command": "uv",
+      "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
+      "cwd": "/absolute/path/to/your/CoreThink-MCP"
     }
   }
 }

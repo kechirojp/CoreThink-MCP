@@ -3,7 +3,7 @@
     "corethink-mcp": {
       "command": "python",
       "args": ["src/corethink_mcp/server/corethink_server.py"],
-      "cwd": "I:\\CoreThink-MCP"
+      "cwd": "/absolute/path/to/your/CoreThink-MCP"
     }
   }
 }
