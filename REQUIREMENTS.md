@@ -10,7 +10,7 @@
 - **安全な段階的実行**: git worktreeサンドボックス環境での隔離実行とdry-run機能
 - **制約駆動検証**: constraints.txtによる厳密なルールベース検証システム
 - **ユニバーサル対応**: Claude Desktop、VS Code、LM Studio等、あらゆるMCP対応アプリで利用可能
-- **ワンクリック導入**: .DXTファイルとSetup Helperによる簡単インストール
+- **Python-first戦略**: メインデプロイメントはPython、将来連携のための技術的拡張性保持
 
 ---
 
@@ -25,6 +25,12 @@
 | `reason_about_change` | user_intent, context | GSR推論による判定結果 | CoreThink GSR推論エンジン | ✅ 実装完了 |
 | `validate_against_constraints` | proposed_change, context | 制約適合性評価 | constraints.txt検証 | ✅ 実装完了 |
 | `execute_with_safeguards` | action, dry_run=True | 安全実行レポート | サンドボックス実行 | ✅ 実装完了 |
+| `trace_reasoning_steps` | user_query, context | 推論過程トレース | 透明性・検証可能性 | ✅ 実装完了 |
+| `refine_understanding` | ambiguous_input, context | 曖昧性解消結果 | 語義曖昧性解消 | ✅ 実装完了 |
+| `orchestrate_multi_step_reasoning` | task, subtasks | 複数段階推論統制 | 階層的タスク分解 | ✅ 実装完了 |
+| `learn_dynamic_constraints` | examples, violations | 動的制約学習 | 自動制約生成 | ✅ 実装完了 |
+| `detect_symbolic_patterns` | input_data, pattern_type | パターン検出結果 | ARC-AGI-2準拠検出 | ✅ 実装完了 |
+| `analyze_repository_context` | repo_path, scope | リポジトリ分析結果 | SWE-Bench技術活用 | ✅ 実装完了 |
 
 #### MCP Resources（提供中）
 
@@ -37,10 +43,10 @@
 
 | 方式 | 対象アプリ | 実装状況 | 特徴 |
 |------|-----------|----------|------|
-| .DXT Package | Claude Desktop | ✅ 実装完了 | ドラッグ&ドロップで1分インストール |
-| Setup Helper | 全アプリ | ✅ 実装完了 | 自動設定ファイル生成 |
-| Remote MCP | claude.ai web | ✅ 実装完了 | HTTP Transport対応 |
-| Local MCP | VS Code, LM Studio | ✅ 実装完了 | STDIO Transport |
+| Python-first | 全アプリ | ✅ 実装完了 | メインデプロイメント戦略 |
+| 手動インストール | VS Code | ✅ 実装完了 | ステップバイステップガイド |
+| 自動同期システム | 連携機能 | ✅ 実装完了 | Python→Node.js自動同期 |
+| 文字化け対策 | 全MCPクライアント | ✅ 実装完了 | PYTHONIOENCODING統一 |
 
 ---
 
