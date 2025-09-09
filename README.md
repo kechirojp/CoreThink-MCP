@@ -167,6 +167,28 @@ python setup_helper.py dxt
 
 ---
 
+## 🚀 今後の予定
+
+### 📦 さらに簡単なインストール方法
+
+**2025年Q4予定**:
+- **VS Code拡張機能ギャラリー登録**: VS Code内から検索→インストールで完了
+- **PyPI (pip) パッケージ公開**: `pip install corethink-mcp` でインストール可能
+
+これらが利用可能になると、現在よりもさらに簡単にインストールできるようになります！
+
+**VS Code拡張機能（最優先）**:
+- VS Code Extensions Marketplace への登録申請中
+- 検索→インストール→設定不要で利用開始
+- 最も簡単で推奨される方法になる予定
+
+**PyPI パッケージ**:
+- Python Package Index への登録準備中
+- `pip install corethink-mcp` 一発インストール
+- Python環境があれば即座に利用可能
+
+---
+
 ### 🥈 方法2: 自動セットアップツール【全アプリ対応・推奨】
 
 **setup_helper.pyが自動で環境構築・設定ファイル生成を行います**
@@ -194,9 +216,13 @@ python setup_helper.py install-uv
 python setup_helper.py install-python
 ```
 
-**VS Code**:
+**VS Code（複数オプション対応）**:
 ```bash
+# Python版（推奨）
 python setup_helper.py install-vscode
+
+# Node.js版設定生成
+python setup_helper.py install-vscode-nodejs
 ```
 
 **LM Studio**:
@@ -281,13 +307,13 @@ npx @corethink/mcp@latest
 
 **VS Code ワンクリック設定**:
 
-[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF)](vscode:mcp/install?%7B%22name%22%3A%22corethink%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22%40corethink%2Fmcp%40latest%22%5D%7D)
+[![Install Node.js Version in VS Code](https://img.shields.io/badge/VS_Code-Install_Node.js_Version-0098FF)](vscode:mcp/install?%7B%22name%22%3A%22corethink-nodejs%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22%40corethink%2Fmcp%40latest%22%5D%7D)
 
 **手動設定例**:
 ```json
 {
-  "mcpServers": {
-    "corethink": {
+  "servers": {
+    "corethink-nodejs": {
       "command": "npx", 
       "args": ["@corethink/mcp@latest"]
     }
@@ -436,54 +462,150 @@ Remote MCPサーバーを起動してWeb版Claudeで利用：
 
 ### 💻 VS Code (v1.102以降)
 
-**🎉 MCPサポートが正式版になりました！** VS Code 1.102以降では、MCPサーバーを公式サポートしており、以下の方法で簡単にインストール・管理できます：
+**🎉 MCPサポートが正式版になりました！** VS Code 1.102以降では、MCPサーバーを公式サポートしており、複数の方法でCoreThink-MCPを利用できます：
 
-#### 推奨方法: MCP Servers ギャラリー 🆕
+> **📢 今後の予定**:
+> - **VS Code拡張機能ギャラリー登録**: 2025年Q4予定（最も簡単なインストール方法）
+> - **PyPI (pip) パッケージ公開**: 2025年9月末予定（`pip install corethink-mcp`）
+> - これらが利用可能になると、さらに簡単にインストールできるようになります！
 
-VS Code 1.102以降では、MCP Serversの管理が大幅に簡単になりました：
+> **⚠️ 重要**: VS Code MCP設定は頻繁に変更されます。最新情報は[VS Code公式MCP設定ページ](https://code.visualstudio.com/docs/copilot/customization/mcp-servers#_use-mcp-tools-in-agent-mode)をご確認ください。
 
-1. **拡張機能ビューを開く**: `Ctrl+Shift+X` (Windows/Linux) または `Cmd+Shift+X` (macOS)
-2. **MCP SERVERS** セクションを探す
-3. **Browse MCP Servers...** をクリック
-4. [VS Code MCP ギャラリー](https://code.visualstudio.com/mcp) でCoreThink-MCPを検索
-5. **Install** ボタンをクリックして自動インストール
+#### 方法1: VS Code UIからのインストール（推奨）🚀
 
-> **📝 注意**: 現在ギャラリーへの登録を準備中です。登録完了まで手動設定をご利用ください。
+**最も簡単な方法**
 
-#### 手動設定方法
+1. **プロジェクトに `.vscode/mcp.json` を作成**:
+   ```json
+   {
+     "servers": {
+       "corethink-mcp-python": {
+         "command": "uv",
+         "args": [
+           "run",
+           "--directory",
+           "i:\\CoreThink-MCP",
+           "python",
+           "-m",
+           "src.corethink_mcp.server.corethink_server"
+         ],
+         "type": "stdio"
+       },
+       "corethink-mcp-nodejs": {
+         "command": "npm",
+         "args": ["start"],
+         "cwd": "i:\\CoreThink-MCP\\nodejs",
+         "type": "stdio"
+       }
+     }
+   }
+   ```
+
+2. **VS Code右下に「サーバーの追加」ボタンが表示**されるのでクリック
+
+3. **インストール方法を選択**:
+   - コマンド (stdio): ローカルコマンド実行
+   - HTTP: リモートサーバー接続
+   - NPM パッケージ: npm経由インストール
+   - Pip パッケージ: pip経由インストール
+   - Docker イメージ: Docker経由実行
+
+4. **自動的にユーザー設定に追加**され、MCP サーバーが利用可能になります
+
+#### 方法2: 手動設定（上級者向け）⚙️
+
+**ユーザー全体で利用したい場合**
 
 ```bash
-# ユーザー設定ファイルを開く
-Ctrl+Shift+P → "MCP: Open User Configuration"
-
-# リモート環境の場合
-Ctrl+Shift+P → "MCP: Open Remote User Configuration"
+# VS Code設定を開く
+Ctrl+Shift+P → "MCP: Edit User Settings"
 ```
-
-**UV環境使用の場合（推奨）**:
 ```json
 {
   "servers": {
-    "corethink-mcp": {
+    "corethink-mcp-nodejs": {
+      "command": "npx",
+      "args": ["@corethink/mcp"],
+      "type": "stdio"
+    }
+  }
+}
+```
+
+#### 方法2: Python版（開発者向け）⚙️
+
+**フル機能のPython実装を使用**
+
+```bash
+# プロジェクトをクローン
+git clone https://github.com/kechirojp/CoreThink-MCP.git
+cd CoreThink-MCP
+```
+
+**VS Code設定**:
+```json
+{
+  "servers": {
+    "corethink-mcp-python": {
       "command": "uv",
-      "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
-      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
+      "args": ["run", "--directory", "C:\\path\\to\\CoreThink-MCP", "python", "-m", "src.corethink_mcp.server.corethink_server"],
+      "type": "stdio"
     }
   }
 }
 ```
 
-**標準Python環境使用の場合**:
+#### 設定方法
+
+1. **VS Code でコマンドパレットを開く**: `Ctrl+Shift+P` (Windows/Linux) または `Cmd+Shift+P` (macOS)
+2. **"MCP: Edit User Settings"** を検索して実行
+3. 上記のいずれかの設定をコピー&ペースト
+4. パスを実際の環境に合わせて修正
+5. VS Code を再起動
+
+#### 接続確認
+
+1. **MCP パネルを開く**: アクティビティバーの MCP アイコンをクリック
+2. **サーバー一覧で接続状態を確認**:
+   - 🟢 緑: 正常接続
+   - 🔴 赤: 接続エラー
+3. **利用可能なツールを確認**: 9つのGSRツールが表示されます
+
+#### トラブルシューティング
+
+**接続に失敗する場合**:
+```bash
+# Node.js版の場合：パッケージを更新
+npm update -g @corethink/mcp
+
+# Python版の場合：依存関係を確認
+cd CoreThink-MCP
+uv sync
+```
+
+**パフォーマンスの問題**:
+- Node.js版: より軽量で高速
+- Python版: フル機能だが若干重い
+
+#### 両方のバージョンを同時利用
+
+**高度なユーザー向け**: 両方のバージョンを同時に設定可能
 ```json
 {
   "servers": {
-    "corethink-mcp": {
-      "command": "python",
-      "args": ["src/corethink_mcp/server/corethink_server.py"],
-      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
+    "corethink-mcp-nodejs": {
+      "command": "npx",
+      "args": ["@corethink/mcp"],
+      "type": "stdio"
+    },
+    "corethink-mcp-python": {
+      "command": "uv",
+      "args": ["run", "--directory", "C:\\path\\to\\CoreThink-MCP", "python", "-m", "src.corethink_mcp.server.corethink_server"],
+      "type": "stdio"
     }
   }
 }
+```
 ```
 
 ---
@@ -821,11 +943,44 @@ MUST: すべてのテストがパスすること
 corethink-mcp/
 ├── src/corethink_mcp/          # メインパッケージ
 │   ├── server/                 # MCPサーバー
-│   │   ├── corethink_server.py # メインサーバー
+│   │   ├── corethink_server.py # メインサーバー（STDIO）
+│   │   ├── remote_server.py    # リモートサーバー（HTTP）
 │   │   └── utils.py           # ユーティリティ
 │   └── constraints.txt        # 制約ルール
+├── nodejs/                    # Node.js/TypeScript実装
+│   ├── src/                   # TypeScriptソース
+│   └── dist/                  # コンパイル済みJS
 ├── conf/base/                 # 設定ファイル
 ├── logs/                      # ログ出力
+├── .vscode/mcp.json          # VS Code MCP設定（ワークスペース用）
+└── setup_helper.py           # 自動セットアップツール
+```
+
+### 🔧 サーバーファイルの役割
+
+#### `corethink_server.py` - メインサーバー（STDIO）
+- **用途**: ローカル環境での利用（VS Code、Claude Desktop等）
+- **通信**: STDIO（標準入出力）
+- **特徴**: 軽量、高速、デバッグ容易
+
+#### `remote_server.py` - リモートサーバー（HTTP）
+- **用途**: Web版claude.ai、企業環境、Docker等での利用
+- **通信**: HTTP + Server-Sent Events
+- **特徴**: 
+  - ネットワーク経由でのアクセス可能
+  - claude.ai Connectorsに対応
+  - CORS対応でブラウザからの接続可能
+  - ヘルスチェック機能付き（`/health`）
+  - サーバー情報取得（`/info`）
+
+**使い分け**:
+- **ローカル開発**: `corethink_server.py`（推奨）
+- **Web版claude.ai**: `remote_server.py`（必須）
+- **企業環境**: `remote_server.py`（セキュリティ設定可能）
+
+#### `nodejs/` - Node.js/TypeScript実装
+- **用途**: npm生態系との統合、VS Codeワンクリックインストール
+- **特徴**: ハイブリッドアーキテクチャ（Node.js + Python）
 ├── .github/                   # GitHub設定
 │   └── copilot-instructions.md # Copilot向けルール
 ├── pyproject.toml             # プロジェクト設定
@@ -937,9 +1092,23 @@ CoreThink-MCPは、この **General Symbolics Reasoning** をMCPサーバーと�
 
 ---
 
-## 📞 サポート
+##  サポート
 
-Issue やプルリクエストをお待ちしています！
+Issue やプルリクエストでサポートを提供しています。質問や問題がある場合は、以下の情報と共にIssueを作成してください：
+- OS とバージョン
+- Python バージョン (`python --version`)
+- エラーメッセージの全文
+- 使用した設定ファイル（パスは伏字で）
+  .env
+  constraints.txt
+- MCP設定ファイル（パスは伏字で）
+  .vscode/settings.json
+  LM Studioのmcp.json
+  Claude Desktopのclaude_desktop_config.json
+  mcp.json
+
+---
+個人開発者による無償サポートのため、対応に時間がかかる場合があります。ご了承ください。
 
 [GitHub Issues](https://github.com/kechirojp/CoreThink-MCP/issues)
 
