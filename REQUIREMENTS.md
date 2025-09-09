@@ -3,32 +3,44 @@
 ## 📄 プロジェクト概要
 
 ### 🎯 目的
-**CoreThink論文（General Symbolics Reasoning: GSR）**の思想を実装し、LLMが自然言語のまま推論・制約検証・安全実行を行えるMCPサーバーを構築する。
+**CoreThink論文（arXiv:2509.00971v2）のGeneral Symbolics Reasoning（GSR）**を実装した Model Context Protocol（MCP）サーバーを構築し、あらゆるLLMの推論能力を向上させる実用的システムを提供する。
 
 ### 🔑 核心価値
-- **自然言語内推論**: JSON構造化せず、言語のまま推論過程を保持
-- **安全な変更適用**: サンドボックス環境での段階的実行
-- **制約駆動開発**: constraints.txtによるルールベース検証
-- **MCPエコシステム連携**: VSCode、GitHub Copilot、Claude Desktop等で利用可能
+- **自然言語内直接推論**: symbolic-neural間の変換損失を回避し、NL-to-NLで一貫した推論
+- **安全な段階的実行**: git worktreeサンドボックス環境での隔離実行とdry-run機能
+- **制約駆動検証**: constraints.txtによる厳密なルールベース検証システム
+- **ユニバーサル対応**: Claude Desktop、VS Code、LM Studio等、あらゆるMCP対応アプリで利用可能
+- **ワンクリック導入**: .DXTファイルとSetup Helperによる簡単インストール
 
 ---
 
 ## 🛠 機能要件
 
-### Core MCP Tools
+### 実装済みコア機能 ✅
 
-| ツール名 | 入力 | 出力 | 役割 |
-|---------|------|------|------|
-| `reason_about_change` | user_intent, current_state, proposed_action | 自然言語の推論結果 | GSRに則った推論エンジン |
-| `validate_against_constraints` | proposed_change, reasoning_context | ✅/❌/⚠️付き検証結果 | 制約適合性チェック |
-| `execute_with_safeguards` | action_description, dry_run=True | 実行レポート | 安全な変更適用 |
+#### Core MCP Tools（動作確認済み）
 
-### MCP Resources
+| ツール名 | 入力 | 出力 | 役割 | 実装状況 |
+|---------|------|------|------|----------|
+| `reason_about_change` | user_intent, context | GSR推論による判定結果 | CoreThink GSR推論エンジン | ✅ 実装完了 |
+| `validate_against_constraints` | proposed_change, context | 制約適合性評価 | constraints.txt検証 | ✅ 実装完了 |
+| `execute_with_safeguards` | action, dry_run=True | 安全実行レポート | サンドボックス実行 | ✅ 実装完了 |
 
-| リソース名 | 内容 | 用途 |
-|-----------|------|------|
-| `read_constraints` | constraints.txtの内容 | 制約ルールの参照 |
-| `read_reasoning_log` | 推論過程のログ | トレーサビリティ確保 |
+#### MCP Resources（提供中）
+
+| リソース名 | 内容 | 用途 | 実装状況 |
+|-----------|------|------|----------|
+| `constraints` | constraints.txtの内容 | 制約ルール参照 | ✅ 実装完了 |
+| `reasoning_log` | 推論過程のログ | トレーサビリティ | ✅ 実装完了 |
+
+#### 配布・インストール方式
+
+| 方式 | 対象アプリ | 実装状況 | 特徴 |
+|------|-----------|----------|------|
+| .DXT Package | Claude Desktop | ✅ 実装完了 | ドラッグ&ドロップで1分インストール |
+| Setup Helper | 全アプリ | ✅ 実装完了 | 自動設定ファイル生成 |
+| Remote MCP | claude.ai web | ✅ 実装完了 | HTTP Transport対応 |
+| Local MCP | VS Code, LM Studio | ✅ 実装完了 | STDIO Transport |
 
 ---
 
@@ -50,16 +62,25 @@
 - **YAGNI**: 必要最小限の機能実装
 - **SOLID**: 依存性逆転による疎結合設計
 
----
+## 🔌 対応アプリケーション（実装済み）
 
-## 🔌 対応アプリケーション
+| アプリ | 接続方式 | 設定ファイル | インストール方法 | 実装状況 |
+|-------|----------|-------------|-----------------|----------|
+| Claude Desktop | STDIO/Local MCP | .dxt/.json | .DXTドラッグ&ドロップ | ✅ 完了 |
+| claude.ai web | HTTP/Remote MCP | Connectors | カスタムConnector追加 | ✅ 完了 |
+| VS Code 1.102+ | MCP Extension | mcp.json | MCP Serversギャラリー | 📅 ギャラリー登録予定 |
+| LM Studio 0.3.17+ | Local MCP | mcp.json | ワンクリック/deeplink | ✅ 完了 |
+| Cursor | 組み込みMCP | .cursorrules | 手動設定 | ✅ 完了 |
 
-| アプリ | 接続方式 | 設定ファイル |
-|-------|----------|-------------|
-| Claude Desktop | STDIO | claude_desktop_config.json |
-| VSCode + GitHub Copilot | MCP Extension | workspace settings |
-| Cursor | 組み込みMCP | .cursorrules |
-| Kiro/Cline | CLI連携 | .clinerules |
+### バージョン管理・自動化機能
+
+| 機能 | 実装状況 | 説明 |
+|------|----------|------|
+| セマンティックバージョニング | ✅ v1.0.0 | pyproject.toml、__init__.py、サーバーで統一 |
+| ポート自動検出 | ✅ 完了 | 8080競合時の自動ポート変更 |
+| 環境変数管理 | ✅ 完了 | .env.example テンプレート提供 |
+| Docker対応 | ✅ 完了 | Local/Remote MCP両対応 |
+| Setup Helper | ✅ 完了 | 自動設定ファイル生成・インストール |
 
 ---
 
@@ -134,21 +155,40 @@ Evaluation Environment (別管理)
 
 ---
 
-## ✅ 受け入れ基準
+## ✅ 受け入れ基準（現在の達成状況）
 
-### MVP完了条件
-1. ✅ 3つのコアツールが動作
-2. ✅ Claude Desktopから呼び出し可能
-3. ✅ constraints.txtによる制約検証
-4. ✅ サンドボックス環境での安全実行
-5. ✅ 自然言語での推論結果出力
+### MVP完了条件 ✅ 達成済み
 
-### 本格運用条件
-1. ✅ SWE-Bench Lite での測定完了
-2. ✅ MLflowによる性能記録
-3. ✅ README.mdへのグラフ掲載
-4. ✅ PyPIパッケージ公開
-5. ✅ 複数IDE/エディタでの動作確認
+1. ✅ **3つのコアツール動作確認済み**
+   - reason_about_change: GSR推論による自然言語判定
+   - validate_against_constraints: 制約適合性検証
+   - execute_with_safeguards: サンドボックス安全実行
+
+2. ✅ **マルチアプリ対応完了**
+   - Claude Desktop: .DXTドラッグ&ドロップインストール
+   - claude.ai web: Remote MCP HTTP Transport
+   - VS Code: MCP Extension設定
+   - LM Studio: ワンクリックdeeplink
+
+3. ✅ **安全性機能実装完了**
+   - constraints.txt制約検証システム
+   - git worktreeサンドボックス環境
+   - dry-run機能によるリスク軽減
+
+4. ✅ **自然言語出力システム**
+   - JSON構造化せず、言語のまま推論結果出力
+   - PROCEED/CAUTION/REJECT判定システム
+   - 推論過程の透明性確保
+
+### 本格運用準備
+
+| 項目 | 現在の状況 | 次ステップ |
+|------|------------|-----------|
+| パフォーマンス測定 | 📅 計画中 | SWE-Bench Lite テスト実行 |
+| PyPI公開 | 📅 準備中 | パッケージング最終調整 |
+| VS Code Gallery登録 | 📅 申請予定 | MCP Servers Gallery申請 |
+| 多言語ドキュメント | 📅 計画中 | 英語・中国語README作成 |
+| 企業向け機能 | 📅 検討中 | OAuth認証、監査ログ強化 |
 
 ---
 

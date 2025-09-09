@@ -1,12 +1,18 @@
 # 🧠 CoreThink-MCP
 
-**General Symbolics Reasoning for Long Horizon Task# 🧠 CoreThink-MCP
+**General Symbolics Reasoning for Long Horizon Tasks - 完全実装版**
 
-**General Symbolics Reasoning for Long Horizon Tasks**
+CoreThink-MCP は、[CoreThink論文](https://arxiv.org/abs/2509.00971)で提案された **General Symbolics Reasoning (GSR)** を **完全実装** した Model Context Protocol (MCP) サーバーです。
 
-CoreThink-MCP は、[CoreThink論文](https://arxiv.org/abs/2509.00971)で提案された **General Symbolics Reasoning (GSR)** を実装した Model Context Protocol (MCP) サーバーです。
+### 🎯 **v1.0.0 - 論文完全準拠版**
 
-### � 学術的背景
+**9つの専門ツール**でGSR推論アーキテクチャを完全再現：
+
+- 🎯 **基本推論**: reason_about_change, validate_against_constraints, execute_with_safeguards
+- 🔬 **高度推論**: trace_reasoning_steps, refine_understanding  
+- 🚀 **先進技術**: detect_symbolic_patterns, orchestrate_multi_step_reasoning, analyze_repository_context, learn_dynamic_constraints
+
+### 📚 学術的背景
 
 本システムは査読済み学術論文に基づく理論的基盤を持つAI推論支援システムです：
 
@@ -486,16 +492,65 @@ Ctrl+Shift+P → "MCP: Open Remote User Configuration"
 
 ## 🛠 利用可能なツール
 
-| ツール | 説明 | 出力例 |
-|-------|------|--------|
-| `reason_about_change` | GSR推論エンジン | 【判定】PROCEED_WITH_CAUTION, 【理由】制約に適合, 【次ステップ】詳細検証 |
-| `validate_against_constraints` | 制約適合性検証 | ✅ MUST適合 ❌ NEVER違反, ⚠️ SHOULD推奨 |
-| `execute_with_safeguards` | 安全な変更実行 | 【DRY RUN】サンドボックスで実行, 実ファイルに影響なし |
+CoreThink-MCPは、論文Section 5-7で提案されたGSR推論アーキテクチャを完全実装した**9つの専門ツール**を提供します：
 
-## 📚 リソース
+### 🎯 基本推論ツール（Phase 1）
 
-- **constraints**: 制約ルールファイルの内容
-- **reasoning_log**: 推論過程のトレースログ
+| ツール | 機能 | 論文根拠 | 出力例 |
+|-------|------|----------|--------|
+| **`reason_about_change`** | GSR基本推論エンジン | Section 5.2 | 【判定】PROCEED_WITH_CAUTION<br>【理由】制約に適合<br>【次ステップ】詳細検証 |
+| **`validate_against_constraints`** | 制約適合性検証 | Section 7 | ✅ MUST適合 ❌ NEVER違反<br>⚠️ SHOULD推奨 |
+| **`execute_with_safeguards`** | 安全な変更実行 | Section 3.4 | 【DRY RUN】サンドボックスで実行<br>実ファイルに影響なし |
+
+### � 高度推論ツール（Phase 1.1）
+
+| ツール | 機能 | 論文根拠 | 特徴 |
+|-------|------|----------|------|
+| **`trace_reasoning_steps`** | 推論過程トレース | Section 5.3 | タイムスタンプ付き推論記録<br>透明性指標・検証可能性 |
+| **`refine_understanding`** | 曖昧性解消・理解精緻化 | Section 5.2 | 多義語検出・文脈依存解釈<br>専門分野適応 |
+
+### 🚀 先進技術ツール（Phase 2）
+
+| ツール | 機能 | 論文根拠 | 技術的特徴 |
+|-------|------|----------|------------|
+| **`detect_symbolic_patterns`** | シンボリックパターン検出 | Section 6.3 & Appendix B | **ARC-AGI-2準拠**<br>23種類の原子操作実装 |
+| **`orchestrate_multi_step_reasoning`** | 複数段階推論統制 | Section 6.2 | 階層的タスク分解<br>ツール連携プロトコル |
+| **`analyze_repository_context`** | リポジトリ規模分析 | Section 6.2 & Figure 4 | **SWE-Bench Lite技術**<br>62.3%成果を支える実装 |
+| **`learn_dynamic_constraints`** | 動的制約学習 | Section 5.2 | 自然言語パターン制約<br>継続学習機能 |
+
+### 🏆 **論文完全準拠の証明**
+
+✅ **Section 3.4**: 医療・法律分野制約対応（`constraints_medical.txt`, `constraints_legal.txt`）  
+✅ **Section 5.2**: 自然言語内推論アーキテクチャ  
+✅ **Section 5.3**: 透明性・説明可能性保証  
+✅ **Section 6.2**: 階層的タスク分解とリポジトリ規模推論  
+✅ **Section 6.3**: ARC-AGI-2技術の23種類原子操作  
+✅ **Section 7**: 責任あるAI原則とバイアス検出  
+
+### 🔄 **自動実行の流れ**
+
+CoreThink-MCPは、複雑なタスクに対して**論文のGSRアーキテクチャに従って自動的にツールを連携**させます：
+
+```mermaid
+graph TD
+    A[複雑なタスク要求] --> B[reason_about_change<br>基本推論実行]
+    B --> C[trace_reasoning_steps<br>推論過程記録]
+    C --> D[refine_understanding<br>曖昧性解消]
+    D --> E[validate_against_constraints<br>制約検証]
+    E --> F[detect_symbolic_patterns<br>パターン解析]
+    F --> G[orchestrate_multi_step_reasoning<br>複数段階統制]
+    G --> H[analyze_repository_context<br>コンテキスト分析]
+    H --> I[learn_dynamic_constraints<br>制約学習]
+    I --> J[execute_with_safeguards<br>安全実行]
+    J --> K[✅ 高品質・安全な結果]
+```
+
+## �📚 リソース
+
+| リソース | 内容 | 用途 |
+|----------|------|------|
+| **constraints** | 基本制約ルール + GSR原則 | 制約検証の基準 |
+| **reasoning_log** | 推論過程のトレースログ | 透明性・デバッグ支援 |
 
 ## 🛠 使用方法
 
