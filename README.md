@@ -494,7 +494,7 @@ Ctrl+Shift+P → "MCP: Open Remote User Configuration"
 
 CoreThink-MCPは、論文Section 5-7で提案されたGSR推論アーキテクチャを完全実装した**9つの専門ツール**を提供します：
 
-### 🎯 基本推論ツール（Phase 1）
+### 🎯 基本推論ツール
 
 | ツール | 機能 | 論文根拠 | 出力例 |
 |-------|------|----------|--------|
@@ -502,12 +502,28 @@ CoreThink-MCPは、論文Section 5-7で提案されたGSR推論アーキテク�
 | **`validate_against_constraints`** | 制約適合性検証 | Section 7 | ✅ MUST適合 ❌ NEVER違反<br>⚠️ SHOULD推奨 |
 | **`execute_with_safeguards`** | 安全な変更実行 | Section 3.4 | 【DRY RUN】サンドボックスで実行<br>実ファイルに影響なし |
 
+### 🔬 高度推論ツール
+
+| ツール | 機能 | 論文根拠 | 特徴 |
+|-------|------|----------|------|
+| **`trace_reasoning_steps`** | 推論過程トレース | Section 5.3 | タイムスタンプ付き推論記録<br>透明性指標・検証可能性 |
+| **`refine_understanding`** | 曖昧性解消・理解精緻化 | Section 5.1 | 多義語検出・文脈依存解釈<br>専門分野適応 |
+| **`orchestrate_multi_step_reasoning`** | 複数段階推論統制 | Section 6.2 | 階層的タスク分解<br>ツール連携プロトコル |
+| **`learn_dynamic_constraints`** | 動的制約学習 | Section 5.2 | 自然言語パターン制約<br>継続学習機能 |
+
+### 🚀 先進技術ツール
+
+| ツール | 機能 | 論文根拠 | 技術的特徴 |
+|-------|------|----------|------------|
+| **`detect_symbolic_patterns`** | シンボリックパターン検出 | Section 6.3 & Appendix B | **ARC-AGI-2準拠**<br>23種類の原子操作実装 |
+| **`analyze_repository_context`** | リポジトリ規模分析 | Section 6.2 & Figure 4 | **SWE-Bench Lite技術**<br>62.3%成果を支える実装 |
+
 ### � 高度推論ツール（Phase 1.1）
 
 | ツール | 機能 | 論文根拠 | 特徴 |
 |-------|------|----------|------|
 | **`trace_reasoning_steps`** | 推論過程トレース | Section 5.3 | タイムスタンプ付き推論記録<br>透明性指標・検証可能性 |
-| **`refine_understanding`** | 曖昧性解消・理解精緻化 | Section 5.2 | 多義語検出・文脈依存解釈<br>専門分野適応 |
+| **`refine_understanding`** | 曖昧性解消・理解精緻化 | Section 5.1 | 多義語検出・文脈依存解釈<br>専門分野適応 |
 
 ### 🚀 先進技術ツール（Phase 2）
 
