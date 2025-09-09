@@ -220,10 +220,12 @@ python setup_helper.py install-lmstudio
 
 **自動セットアップが失敗した場合や、特定の設定が必要な場合**
 
-#### ステップ1: 環境構築
+#### 実装版選択
 
 <details>
-<summary>🚀 UV環境（推奨）</summary>
+<summary>� Python版（完全機能・推奨）</summary>
+
+##### UV環境（推奨）
 
 ```bash
 # リポジトリをクローン
@@ -261,6 +263,56 @@ source .venv/bin/activate
 # 依存関係インストール
 pip install mcp[cli] fastmcp pyyaml gitpython python-dotenv
 ```
+
+</details>
+
+<details>
+<summary>🟢 Node.js版（npm生態系対応） 🆕</summary>
+
+**NPM経由でのインストール**:
+
+```bash
+# グローバルインストール
+npm install -g @corethink/mcp
+
+# または、npxで直接実行
+npx @corethink/mcp@latest
+```
+
+**VS Code ワンクリック設定**:
+
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF)](vscode:mcp/install?%7B%22name%22%3A%22corethink%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22%40corethink%2Fmcp%40latest%22%5D%7D)
+
+**手動設定例**:
+```json
+{
+  "mcpServers": {
+    "corethink": {
+      "command": "npx", 
+      "args": ["@corethink/mcp@latest"]
+    }
+  }
+}
+```
+
+**特徴と制約**:
+
+✅ **メリット**:
+- npm/yarn生態系との統合
+- VS Code公式ボタンでワンクリックインストール  
+- Node.js開発者に馴染みやすい設定
+
+⚠️ **制約**:
+- Python版へのプロキシ（両方の環境が必要）
+- 起動時間が少し長め（~2秒 vs ~1秒）
+- デバッグが複雑（Node.js + Python 2層構造）
+
+**推奨利用場面**:
+- Node.js/TypeScript中心の開発環境
+- VS Code公式ボタンでの簡単インストールが必要
+- npm配布が必須の企業環境
+
+詳細は [Node.js版ドキュメント](nodejs/README.md) をご覧ください。
 
 </details>
 

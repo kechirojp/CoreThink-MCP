@@ -1,0 +1,59 @@
+{
+  "name": "@corethink/mcp",
+  "version": "1.0.0",
+  "description": "CoreThink-MCP Node.js server with General Symbolics Reasoning",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "corethink-mcp": "dist/bin/corethink-mcp.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/bin/corethink-mcp.js",
+    "dev": "ts-node src/bin/corethink-mcp.ts",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "corethink",
+    "gsr",
+    "general-symbolics-reasoning",
+    "ai",
+    "llm",
+    "reasoning",
+    "safety",
+    "constraints"
+  ],
+  "author": "CoreThink-MCP Team",
+  "license": "CC-BY-4.0",
+  "homepage": "https://github.com/kechirojp/CoreThink-MCP",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kechirojp/CoreThink-MCP.git",
+    "directory": "nodejs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0",
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ]
+}
