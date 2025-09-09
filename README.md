@@ -220,9 +220,6 @@ python setup_helper.py install-python
 ```bash
 # Python版（推奨）
 python setup_helper.py install-vscode
-
-# Node.js版設定生成
-python setup_helper.py install-vscode-nodejs
 ```
 
 **LM Studio**:
@@ -289,56 +286,6 @@ source .venv/bin/activate
 # 依存関係インストール
 pip install mcp[cli] fastmcp pyyaml gitpython python-dotenv
 ```
-
-</details>
-
-<details>
-<summary>🟢 Node.js版（npm生態系対応） 🆕</summary>
-
-**NPM経由でのインストール**:
-
-```bash
-# グローバルインストール
-npm install -g @corethink/mcp
-
-# または、npxで直接実行
-npx @corethink/mcp@latest
-```
-
-**VS Code ワンクリック設定**:
-
-[![Install Node.js Version in VS Code](https://img.shields.io/badge/VS_Code-Install_Node.js_Version-0098FF)](vscode:mcp/install?%7B%22name%22%3A%22corethink-nodejs%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22%40corethink%2Fmcp%40latest%22%5D%7D)
-
-**手動設定例**:
-```json
-{
-  "servers": {
-    "corethink-nodejs": {
-      "command": "npx", 
-      "args": ["@corethink/mcp@latest"]
-    }
-  }
-}
-```
-
-**特徴と制約**:
-
-✅ **メリット**:
-- npm/yarn生態系との統合
-- VS Code公式ボタンでワンクリックインストール  
-- Node.js開発者に馴染みやすい設定
-
-⚠️ **制約**:
-- Python版へのプロキシ（両方の環境が必要）
-- 起動時間が少し長め（~2秒 vs ~1秒）
-- デバッグが複雑（Node.js + Python 2層構造）
-
-**推奨利用場面**:
-- Node.js/TypeScript中心の開発環境
-- VS Code公式ボタンでの簡単インストールが必要
-- npm配布が必須の企業環境
-
-詳細は [Node.js版ドキュメント](nodejs/README.md) をご覧ください。
 
 </details>
 
@@ -410,7 +357,10 @@ python src/corethink_mcp/server/remote_server.py
     "corethink-mcp": {
       "command": "uv",
       "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
-      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP",
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
     }
   }
 }
@@ -426,6 +376,7 @@ python src/corethink_mcp/server/remote_server.py
       "args": ["src/corethink_mcp/server/corethink_server.py"],
       "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP",
       "env": {
+        "PYTHONIOENCODING": "utf-8",
         "PATH": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP/.venv/bin:/YOUR_ABSOLUTE_PATH/CoreThink-MCP/.venv/Scripts:${PATH}"
       }
     }
@@ -465,8 +416,8 @@ Remote MCPサーバーを起動してWeb版Claudeで利用：
 **🎉 MCPサポートが正式版になりました！** VS Code 1.102以降では、MCPサーバーを公式サポートしており、複数の方法でCoreThink-MCPを利用できます：
 
 > **📢 今後の予定**:
-> - **VS Code拡張機能ギャラリー登録**: 2025年Q4予定（最も簡単なインストール方法）
-> - **PyPI (pip) パッケージ公開**: 2025年9月末予定（`pip install corethink-mcp`）
+> - **VS Code拡張機能ギャラリー登録**: 2025年9月末予定（最も簡単なインストール方法）
+> - **PyPI (pip) パッケージ公開**: 2025年10月初旬（`pip install corethink-mcp`）
 > - これらが利用可能になると、さらに簡単にインストールできるようになります！
 
 > **⚠️ 重要**: VS Code MCP設定は頻繁に変更されます。最新情報は[VS Code公式MCP設定ページ](https://code.visualstudio.com/docs/copilot/customization/mcp-servers#_use-mcp-tools-in-agent-mode)をご確認ください。
@@ -490,12 +441,6 @@ Remote MCPサーバーを起動してWeb版Claudeで利用：
            "src.corethink_mcp.server.corethink_server"
          ],
          "type": "stdio"
-       },
-       "corethink-mcp-nodejs": {
-         "command": "npm",
-         "args": ["start"],
-         "cwd": "i:\\CoreThink-MCP\\nodejs",
-         "type": "stdio"
        }
      }
    }
@@ -506,13 +451,59 @@ Remote MCPサーバーを起動してWeb版Claudeで利用：
 3. **インストール方法を選択**:
    - コマンド (stdio): ローカルコマンド実行
    - HTTP: リモートサーバー接続
-   - NPM パッケージ: npm経由インストール
    - Pip パッケージ: pip経由インストール
    - Docker イメージ: Docker経由実行
 
 4. **自動的にユーザー設定に追加**され、MCP サーバーが利用可能になります
 
-#### 方法2: 手動設定（上級者向け）⚙️
+#### 方法2: 手動インストール（詳細手順）⚙️
+
+**ステップバイステップでのインストール**
+
+1. **プロジェクトの準備**
+   ```bash
+   # プロジェクトをクローン
+   git clone https://github.com/kechirojp/CoreThink-MCP.git
+   cd CoreThink-MCP
+   
+   # 依存関係をインストール
+   uv sync
+   ```
+
+2. **VS Code設定**
+   - ワークスペースに `.vscode` フォルダを作成
+   - `mcp.json` ファイルを作成（空のJSONから開始）
+   ```json
+   {}
+   ```
+
+3. **MCP サーバーの追加**
+   - VS Code右下の「サーバーの追加」ボタンを押下
+   - 「コマンド (stdio)」を選択
+   - 「手動インストール」を選択
+
+4. **コマンドを入力**
+   ```bash
+   uv run --directory YOUR_PATH/CoreThink-MCP python -m src.corethink_mcp.server.corethink_server
+   ```
+   ※ `YOUR_PATH` は実際のプロジェクトパスに置き換えてください
+
+5. **サーバー名を設定**
+   - 分かりやすい名前を付ける（例：「CoreThink-MCP」）
+
+6. **文字化け対策の設定追加**
+   ```json
+   "env": {
+       "PYTHONIOENCODING": "utf-8"
+   }
+   ```
+
+7. **接続確認**
+   - GitHub Copilot をエージェントモードにする
+   - 右下のツールボタン（🔧スパナとドライバーのアイコン）を押す
+   - 登録したサーバー名が表示されれば成功！
+
+#### 方法3: 上級者向け設定⚙️
 
 **ユーザー全体で利用したい場合**
 
@@ -523,18 +514,21 @@ Ctrl+Shift+P → "MCP: Edit User Settings"
 ```json
 {
   "servers": {
-    "corethink-mcp-nodejs": {
-      "command": "npx",
-      "args": ["@corethink/mcp"],
-      "type": "stdio"
+    "corethink-mcp": {
+      "command": "uv",
+      "args": ["run", "--directory", "C:\\path\\to\\CoreThink-MCP", "python", "-m", "src.corethink_mcp.server.corethink_server"],
+      "type": "stdio",
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
     }
   }
 }
 ```
 
-#### 方法2: Python版（開発者向け）⚙️
+#### 方法4: 開発環境向け設定⚙️
 
-**フル機能のPython実装を使用**
+**ワークスペース固有の設定**
 
 ```bash
 # プロジェクトをクローン
@@ -549,7 +543,10 @@ cd CoreThink-MCP
     "corethink-mcp-python": {
       "command": "uv",
       "args": ["run", "--directory", "C:\\path\\to\\CoreThink-MCP", "python", "-m", "src.corethink_mcp.server.corethink_server"],
-      "type": "stdio"
+      "type": "stdio",
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
     }
   }
 }
@@ -575,37 +572,15 @@ cd CoreThink-MCP
 
 **接続に失敗する場合**:
 ```bash
-# Node.js版の場合：パッケージを更新
-npm update -g @corethink/mcp
-
-# Python版の場合：依存関係を確認
+# 依存関係を確認
 cd CoreThink-MCP
 uv sync
 ```
 
 **パフォーマンスの問題**:
-- Node.js版: より軽量で高速
-- Python版: フル機能だが若干重い
+- 初回起動時は依存関係のロードで若干時間がかかる場合があります
+- 2回目以降は高速に起動します
 
-#### 両方のバージョンを同時利用
-
-**高度なユーザー向け**: 両方のバージョンを同時に設定可能
-```json
-{
-  "servers": {
-    "corethink-mcp-nodejs": {
-      "command": "npx",
-      "args": ["@corethink/mcp"],
-      "type": "stdio"
-    },
-    "corethink-mcp-python": {
-      "command": "uv",
-      "args": ["run", "--directory", "C:\\path\\to\\CoreThink-MCP", "python", "-m", "src.corethink_mcp.server.corethink_server"],
-      "type": "stdio"
-    }
-  }
-}
-```
 ```
 
 ---
@@ -643,7 +618,10 @@ uv sync
     "corethink-mcp": {
       "command": "python",
       "args": ["src/corethink_mcp/server/corethink_server.py"],
-      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP",
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
     }
   }
 }
@@ -656,7 +634,10 @@ uv sync
     "corethink-mcp": {
       "command": "uv",
       "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
-      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP"
+      "cwd": "/YOUR_ABSOLUTE_PATH/CoreThink-MCP",
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
     }
   }
 }
@@ -947,7 +928,7 @@ corethink-mcp/
 │   │   ├── remote_server.py    # リモートサーバー（HTTP）
 │   │   └── utils.py           # ユーティリティ
 │   └── constraints.txt        # 制約ルール
-├── nodejs/                    # Node.js/TypeScript実装
+├── nodejs/                    # TypeScript実装（連携用）
 │   ├── src/                   # TypeScriptソース
 │   └── dist/                  # コンパイル済みJS
 ├── conf/base/                 # 設定ファイル
@@ -978,9 +959,10 @@ corethink-mcp/
 - **Web版claude.ai**: `remote_server.py`（必須）
 - **企業環境**: `remote_server.py`（セキュリティ設定可能）
 
-#### `nodejs/` - Node.js/TypeScript実装
-- **用途**: npm生態系との統合、VS Codeワンクリックインストール
-- **特徴**: ハイブリッドアーキテクチャ（Node.js + Python）
+#### `nodejs/` - Node.js/TypeScript実装（将来の連携用）
+- **用途**: 将来的なnpm生態系との統合、実験的機能
+- **特徴**: Python機能とのハイブリッドアーキテクチャ
+
 ├── .github/                   # GitHub設定
 │   └── copilot-instructions.md # Copilot向けルール
 ├── pyproject.toml             # プロジェクト設定
@@ -1002,7 +984,7 @@ corethink-mcp/
 
 - [x] Phase 1: MVP（基本3ツール）
 - [ ] Phase 2: 高度な制約学習
-- [ ] Phase 3: Node.js版サーバー
+- [ ] Phase 3: 連携機能拡張
 - [ ] Phase 4: MLflow連携での性能測定
 - [ ] Phase 5: PyPI公開
 

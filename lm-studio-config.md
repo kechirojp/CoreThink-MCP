@@ -24,7 +24,10 @@
   "corethink-mcp": {
     "command": "python",
     "args": ["src/corethink_mcp/server/corethink_server.py"],
-    "cwd": "/absolute/path/to/your/CoreThink-MCP"
+    "cwd": "/absolute/path/to/your/CoreThink-MCP",
+    "env": {
+      "PYTHONIOENCODING": "utf-8"
+    }
   }
 }
 ```
@@ -36,7 +39,10 @@
   "corethink-mcp": {
     "command": "uv", 
     "args": ["run", "python", "src/corethink_mcp/server/corethink_server.py"],
-    "cwd": "/absolute/path/to/your/CoreThink-MCP"
+    "cwd": "/absolute/path/to/your/CoreThink-MCP",
+    "env": {
+      "PYTHONIOENCODING": "utf-8"
+    }
   }
 }
 ```

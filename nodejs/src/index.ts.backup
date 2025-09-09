@@ -1,5 +1,5 @@
 // 🤖 CoreThink-MCP Node.js Server (自動生成)
-// 生成日時: "2025-09-10 03:23:44.303473"
+// 生成日時: "2025-09-10 03:13:14.264891"
 // 元ファイル: i:\CoreThink-MCP\nodejs\src\index.ts
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';

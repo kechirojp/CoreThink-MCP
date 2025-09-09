@@ -13,13 +13,6 @@ from pathlib import Path
 from typing import Any, Dict, List
 from dotenv import load_dotenv
 
-# UTF-8エンコーディング強制設定
-os.environ['PYTHONIOENCODING'] = 'utf-8'
-if hasattr(sys.stdout, 'reconfigure'):
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-if hasattr(sys.stderr, 'reconfigure'):
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
-
 # GitPython の import（エラーハンドリング付き）
 try:
     import git
@@ -38,16 +31,15 @@ if str(project_root) not in sys.path:
 
 from src.corethink_mcp import get_version_info
 
-# ログ設定（UTF-8対応）
+# ログ設定（必ずstderrに出力）
 log_level = os.getenv("CORETHINK_LOG_LEVEL", "INFO")
 logging.basicConfig(
     level=getattr(logging, log_level),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(Path("logs") / "trace.log", encoding='utf-8'),
-        logging.StreamHandler(sys.stderr)
-    ],
-    force=True  # 既存のハンドラーを上書き
+        logging.StreamHandler()  # stderr出力
+    ]
 )
 logger = logging.getLogger(__name__)
 

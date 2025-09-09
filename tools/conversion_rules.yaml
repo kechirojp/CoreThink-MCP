@@ -1,0 +1,78 @@
+# CoreThink-MCP 自動変換ルール設定
+
+# 型マッピング
+type_mappings:
+  str: string
+  int: number
+  float: number
+  bool: boolean
+  Any: any
+  "Optional[str]": "string | undefined"
+  "Optional[int]": "number | undefined"
+  "Optional[bool]": "boolean | undefined"
+  "List[str]": "string[]"
+  "List[int]": "number[]"
+  "Dict[str, Any]": "Record<string, any>"
+
+# 構文変換ルール
+syntax_rules:
+  # f-string変換
+  - pattern: 'f"([^"]*)"'
+    replacement: '`\1`'
+  
+  - pattern: "f'([^']*)'"
+    replacement: '`\1`'
+  
+  - pattern: '\{([^}]+)\}'
+    replacement: '${\1}'
+  
+  # 例外処理
+  - pattern: 'except (\w+)'
+    replacement: 'catch (\1)'
+  
+  - pattern: 'except:'
+    replacement: 'catch (error)'
+  
+  - pattern: 'raise (\w+)'
+    replacement: 'throw \1'
+  
+  # 基本的な値
+  - pattern: '\bNone\b'
+    replacement: 'null'
+  
+  - pattern: '\bTrue\b'
+    replacement: 'true'
+  
+  - pattern: '\bFalse\b'
+    replacement: 'false'
+  
+  # 文字列メソッド
+  - pattern: '\.strip\(\)'
+    replacement: '.trim()'
+  
+  - pattern: 'len\(([^)]+)\)'
+    replacement: '\1.length'
+
+# CoreThink特有のパターン
+corethink_patterns:
+  # ログ出力
+  - pattern: 'logger\.info\(([^)]+)\)'
+    replacement: 'console.log(\1)'
+  
+  - pattern: 'logger\.warning\(([^)]+)\)'
+    replacement: 'console.warn(\1)'
+  
+  - pattern: 'logger\.error\(([^)]+)\)'
+    replacement: 'console.error(\1)'
+  
+  # GSR推論フォーマット
+  - pattern: '【([^】]+)】'
+    replacement: '【\1】'  # そのまま保持
+
+# 手動調整が必要なパターン
+manual_review_needed:
+  - "async/await関数呼び出し"
+  - "ファイルI/O操作"
+  - "複雑な例外処理"
+  - "Python特有のライブラリ呼び出し"
+  - "動的型付け関連"

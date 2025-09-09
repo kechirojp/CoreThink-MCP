@@ -1,0 +1,19 @@
+{# ツール定義テンプレート #}
+{%- for tool in tools %}
+            {
+              name: '{{ tool.name }}',
+              description: '{{ tool.description.split('\n')[0] | replace("'", "\\'") }}',
+              inputSchema: {
+                type: 'object',
+                properties: {
+{%- for arg in tool.arguments %}
+                  {{ arg.name }}: { 
+                    type: '{{ arg.typescript_type }}', 
+                    description: '{{ arg.name }}パラメータ'
+                  }{% if not loop.last %},{% endif %}
+{%- endfor %}
+                },
+                required: [{% for arg in tool.arguments if arg.required %}'{{ arg.name }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+              },
+            }{% if not loop.last %},{% endif %}
+{%- endfor %}
