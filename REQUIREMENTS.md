@@ -131,12 +131,16 @@ Evaluation Environment (別管理)
 
 ## 🌐 多言語対応
 
-### 初期実装
+### ✅ 実装完了
 - **Python 3.11.12**: メインサーバー（uv管理）
 - **STDIO通信**: 標準入出力によるMCP通信
+- **Node.js/TypeScript版**: ハイブリッドアーキテクチャ実装完了
+  - Node.js フロントエンド + Python GSR エンジン
+  - @modelcontextprotocol/sdk v1.0.0 対応
+  - npm パッケージ配布準備完了
+  - VS Code ワンクリックインストール対応
 
 ### 将来拡張
-- **Node.js版**: 純実装またはPythonラッパー
 - **HTTP API**: REST APIによるクライアント連携
 
 ---
@@ -195,7 +199,9 @@ Evaluation Environment (別管理)
 ## 🔄 運用要件
 
 ### デプロイメント
-- **パッケージ配布**: PyPI/npm経由
+- **パッケージ配布**: 
+  - ✅ **Python**: PyPI準備完了
+  - ✅ **Node.js**: npm パッケージ実装完了（@corethink/mcp）
 - **コンテナ化**: Docker対応（オプション）
 - **CI/CD**: GitHub Actionsによる自動テスト
 
