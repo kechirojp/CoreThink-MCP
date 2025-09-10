@@ -1,4 +1,4 @@
-# CoreThink-MCP 要件定義仕様書
+# CoreThink-MCP 要件定義仕様書（最終更新：2025年9月11日）
 
 ## 📄 プロジェクト概要
 
@@ -11,6 +11,7 @@
 - **制約駆動検証**: constraints.txtによる厳密なルールベース検証システム
 - **ユニバーサル対応**: Claude Desktop、VS Code、LM Studio等、あらゆるMCP対応アプリで利用可能
 - **Python-first戦略**: メインデプロイメントはPython、将来連携のための技術的拡張性保持
+- **Elicitation機能**: ユーザー入力要求による動的情報収集
 
 ---
 
@@ -31,6 +32,15 @@
 | `learn_dynamic_constraints` | examples, violations | 動的制約学習 | 自動制約生成 | ✅ 実装完了 |
 | `detect_symbolic_patterns` | input_data, pattern_type | パターン検出結果 | ARC-AGI-2準拠検出 | ✅ 実装完了 |
 | `analyze_repository_context` | repo_path, scope | リポジトリ分析結果 | SWE-Bench技術活用 | ✅ 実装完了 |
+
+#### Elicitation機能（ユーザー入力要求）✅
+
+| コンポーネント | 機能 | 実装状況 |
+|---------------|------|----------|
+| `elicitation.py` | 基本Elicitation機能 | ✅ 実装完了 |
+| `elicitation_client.py` | クライアント実装 | ✅ 実装完了 |
+| `elicitation_server.py` | サーバー実装 | ✅ 実装完了 |
+| `test_elicitation.py` | テストファイル | ✅ 実装完了 |
 
 #### MCP Resources（提供中）
 

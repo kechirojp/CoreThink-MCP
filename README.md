@@ -1,4 +1,4 @@
-# 🧠 CoreThink-MCP
+# 🧠 CoreThink-MCP（v1.0.0 + Elicitation機能）
 > LLMモデル訓練不要・透明な記号推論で、重大な判断を安全に支援するMCPサーバー
   
 ---
@@ -22,27 +22,25 @@
 |------|------|
 | **何？** | LLMに追加して使う「記号的推論層」。MCPプロトコルで動作。 |
 | **誰向け？** | 医療・法律・金融・インフラなど、**取返しのつかない判断を迫られる現場のAI利用者**。 |
-| **何がすごい？** | ✅ 訓練不要で推論性能が飛躍的に向上<br>✅ 論文で示されたSOTA性能（例：SWE-Bench Lite 62.3%）を再現<br>✅ 自然言語で推論、すべての過程が人間可読 |
-| **何がおいしい？** | - 医療：誤診リスクを軽減<br>- 法律：違法条項を自動検出<br>- インフラ：本番変更前に安全計画を生成 |
+| **何がすごい？** | ✅ 訓練不要で推論性能が飛躍的に向上<br>✅ 論文で示されたSOTA性能（例：SWE-Bench Lite 62.3%）を再現<br>✅ 自然言語で推論、すべての過程が人間可読<br>✅ **Elicitation機能**：動的にユーザー入力を要求 |
+| **何がおいしい？** | - 医療：誤診リスクを軽減<br>- 法律：違法条項を自動検出<br>- インフラ：本番変更前に安全計画を生成<br>- **対話型推論**：不足情報を自動で追加要求 |
 | **どう使う？** | `corethink ○○について詳しく考察して！！` と自然言語で指示するだけ。自動で適切なツールを呼び出し、推論を開始。 |
 | **注意点** | 普通のセッションより**長い思考時間**が必要。推論過程は `logs/` に記録。 |
 
 ---
 
-
-
-
 **General Symbolics Reasoning for Long Horizon Tasks - 完全実装版**
 
 CoreThink-MCP は、[CoreThink論文](https://arxiv.org/abs/2509.00971)で提案された **General Symbolics Reasoning (GSR)** を **完全実装** した Model Context Protocol (MCP) サーバーです。
 
-### 🎯 **v1.0.0 - 論文完全準拠版**
+### 🎯 **v1.0.0 + Elicitation機能 - 論文完全準拠版**
 
-**9つの専門ツール**でGSR推論アーキテクチャを完全再現：
+**9つの専門ツール + Elicitation機能**でGSR推論アーキテクチャを完全再現：
 
 - 🎯 **基本推論**: reason_about_change, validate_against_constraints, execute_with_safeguards
 - 🔬 **高度推論**: trace_reasoning_steps, refine_understanding  
 - 🚀 **先進技術**: detect_symbolic_patterns, orchestrate_multi_step_reasoning, analyze_repository_context, learn_dynamic_constraints
+- 💬 **Elicitation**: ユーザー入力要求による動的情報収集
 
 ### 📚 学術的背景
 
@@ -53,6 +51,7 @@ CoreThink-MCP は、[CoreThink論文](https://arxiv.org/abs/2509.00971)で提案
 3. **企業適用**: 医療・法律等高信頼性分野での利用を考慮
 4. **研究貢献**: 人工知能分野への学術的貢献
 5. **効率性**: ファインチューニング不要での性能向上
+6. **対話型推論**: Elicitation機能による動的情報収集
 
 ### 📊 性能評価結果
 
@@ -249,6 +248,34 @@ python setup_helper.py install-python
 ```
 
 **VS Code（複数オプション対応）**:
+```bash
+python setup_helper.py install-vscode
+```
+
+**LM Studio**:
+```bash
+python setup_helper.py install-lmstudio
+```
+
+**❌ 失敗した場合**: [方法3の手動設定](#🥉-方法3-手動設定カスタマイズ必要時)をお試しください
+
+### 🥉 方法3: 手動設定【カスタマイズ必要時】
+
+VS Code用の各OS別設定ファイルが `install/` フォルダに用意されています：
+
+- **Windows**: [`install/mcp.json.windows`](install/mcp.json.windows) → `C:\Users\<username>\AppData\Roaming\Code\User\mcp.json`
+- **macOS**: [`install/mcp.json.macos`](install/mcp.json.macos) → `~/Library/Application Support/Code/User/mcp.json`  
+- **Linux**: [`install/mcp.json.linux`](install/mcp.json.linux) → `~/.config/Code/User/mcp.json`
+
+詳細な手動設定方法は **[📋 install/README.md](install/README.md)** を参照してください。
+
+#### 重要な設定ポイント
+
+1. **パスの書き換え**: テンプレートのパス部分を実際のインストール場所に変更
+2. **文字化け対策**: `PYTHONIOENCODING: utf-8` は必須
+3. **既存設定の保持**: 他のMCPサーバー設定がある場合は追加で設定
+
+---
 ```bash
 # Python版（推奨）
 python setup_helper.py install-vscode
@@ -456,37 +483,9 @@ Remote MCPサーバーを起動してWeb版Claudeで利用：
 
 #### 方法1: VS Code UIからのインストール（推奨）🚀
 
-**最も簡単な方法**
+**最も確実な方法**
 
-1. **プロジェクトに `.vscode/mcp.json` を作成**:
-   ```json
-   {
-     "servers": {
-       "corethink-mcp-python": {
-         "command": "uv",
-         "args": [
-           "run",
-           "--directory",
-           "i:\\CoreThink-MCP",
-           "python",
-           "-m",
-           "src.corethink_mcp.server.corethink_server"
-         ],
-         "type": "stdio"
-       }
-     }
-   }
-   ```
 
-2. **VS Code右下に「サーバーの追加」ボタンが表示**されるのでクリック
-
-3. **インストール方法を選択**:
-   - コマンド (stdio): ローカルコマンド実行
-   - HTTP: リモートサーバー接続
-   - Pip パッケージ: pip経由インストール
-   - Docker イメージ: Docker経由実行
-
-4. **自動的にユーザー設定に追加**され、MCP サーバーが利用可能になります
 
 #### 方法2: 手動インストール（詳細手順）⚙️
 
@@ -502,47 +501,8 @@ Remote MCPサーバーを起動してWeb版Claudeで利用：
    uv sync
    ```
 
-2. **VS Code設定**
-   - ワークスペースに `.vscode` フォルダを作成
-   - `mcp.json` ファイルを作成（空のJSONから開始）
-   ```json
-   {}
-   ```
 
-3. **MCP サーバーの追加**
-   - VS Code右下の「サーバーの追加」ボタンを押下
-   - 「コマンド (stdio)」を選択
-   - 「手動インストール」を選択
-
-4. **コマンドを入力**
-   ```bash
-   uv run --directory YOUR_PATH/CoreThink-MCP python -m src.corethink_mcp.server.corethink_server
-   ```
-   ※ `YOUR_PATH` は実際のプロジェクトパスに置き換えてください
-
-5. **サーバー名を設定**
-   - 分かりやすい名前を付ける（例：「CoreThink-MCP」）
-
-6. **文字化け対策の設定追加**
-   ```json
-   "env": {
-       "PYTHONIOENCODING": "utf-8"
-   }
-   ```
-
-7. **接続確認**
-   - GitHub Copilot をエージェントモードにする
-   - 右下のツールボタン（🔧スパナとドライバーのアイコン）を押す
-   - 登録したサーバー名が表示されれば成功！
-
-#### 方法3: 上級者向け設定⚙️
-
-**ユーザー全体で利用したい場合**
-
-```bash
-# VS Code設定を開く
-Ctrl+Shift+P → "MCP: Edit User Settings"
-```
+**VS Code設定**:
 ```json
 {
   "servers": {
@@ -558,47 +518,21 @@ Ctrl+Shift+P → "MCP: Edit User Settings"
 }
 ```
 
-#### 方法4: 開発環境向け設定⚙️
-
-**ワークスペース固有の設定**
-
-```bash
-# プロジェクトをクローン
-git clone https://github.com/kechirojp/CoreThink-MCP.git
-cd CoreThink-MCP
-```
-
-**VS Code設定**:
-```json
-{
-  "servers": {
-    "corethink-mcp-python": {
-      "command": "uv",
-      "args": ["run", "--directory", "C:\\path\\to\\CoreThink-MCP", "python", "-m", "src.corethink_mcp.server.corethink_server"],
-      "type": "stdio",
-      "env": {
-        "PYTHONIOENCODING": "utf-8"
-      }
-    }
-  }
-}
-```
 
 #### 設定方法
 
 1. **VS Code でコマンドパレットを開く**: `Ctrl+Shift+P` (Windows/Linux) または `Cmd+Shift+P` (macOS)
 2. **"MCP: Edit User Settings"** を検索して実行
-3. 上記のいずれかの設定をコピー&ペースト
+3. 上記の設定をMCP.jsonにコピー&ペースト
 4. パスを実際の環境に合わせて修正
 5. VS Code を再起動
 
 #### 接続確認
-
-1. **MCP パネルを開く**: アクティビティバーの MCP アイコンをクリック
-2. **サーバー一覧で接続状態を確認**:
-   - 🟢 緑: 正常接続
-   - 🔴 赤: 接続エラー
-3. **利用可能なツールを確認**: 9つのGSRツールが表示されます
+拡張機能タブを開き　MCPサーバーインストール済に登録されていれば
+エージェントモードでチャットを開始後
+自動で接続されます。
+もしくは拡張機能タブのMCPサーバー一覧からCoreThink-MCP選び
+を右クリックして起動を選択
 
 #### トラブルシューティング
 

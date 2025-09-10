@@ -1,0 +1,19 @@
+{
+	"servers": {
+		"CoreThink-MCP": {
+			"type": "stdio",
+			"command": "uv",
+			"args": [
+				"run",
+				"--directory",
+				"C:\\Path\\To\\CoreThink-MCP",
+				"python",
+				"-m",
+				"src.corethink_mcp.server.corethink_server"
+			],
+			"env": {
+				"PYTHONIOENCODING": "utf-8"
+			}
+		}
+	}
+}
