@@ -379,7 +379,7 @@ if app:
     @app.tool()
     async def refine_understanding(
         ambiguous_request: str,
-        context_clues: str,
+        context_clues: str = "",
         domain_hints: str = ""  # 医療、法律等の専門分野指定
     ) -> str:
         """
@@ -388,8 +388,8 @@ if app:
         
         Args:
             ambiguous_request: The potentially ambiguous user request
-            context_clues: Available contextual information
-            domain_hints: Domain-specific hints (medical, legal, etc.)
+            context_clues: Available contextual information (can be elicited if missing)
+            domain_hints: Domain-specific hints (medical, legal, etc.) (can be elicited if missing)
             
         Returns:
             Refined understanding with disambiguation analysis and clarified interpretation

@@ -49,6 +49,9 @@ temp/
 # Git sandbox
 .sandbox/
 
+# Old/backup files
+src/corethink_mcp/server/old/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -86,3 +89,7 @@ dist/
 # Local config overrides
 .env.local
 config/local/
+
+# Long Memory MCP documents
+Long_Memory_MCP_doc/
+*.md
