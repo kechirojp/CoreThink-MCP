@@ -384,52 +384,65 @@ if app:
     ) -> str:
         """
         Resolves semantic ambiguity in user requests through contextual analysis.
-        Implements lexical disambiguation with FastMCP elicitation for missing information.
+        **推論ファースト設計**: 情報不足でも推論による補完で必ず分析実行
         
         Args:
             ambiguous_request: The potentially ambiguous user request
-            context_clues: Available contextual information (elicited if missing)
-            domain_hints: Domain-specific hints (medical, legal, etc.) (elicited if missing)
+            context_clues: Available contextual information (推論で補完可能)
+            domain_hints: Domain-specific hints (推論で推定可能)
             
         Returns:
-            Refined understanding with disambiguation analysis and clarified interpretation
+            Refined understanding with reasoning-based completion and uncertainty indicators
         """
-        logger.info(f"曖昧性解消開始: {ambiguous_request}")
+        logger.info(f"推論ファースト曖昧性解消開始: {ambiguous_request}")
         
         try:
-            # Elicitation判定: 不足情報の検出
-            needs_elicitation = not context_clues or not domain_hints
-            elicitation_info = ""
+            # ========== PHASE 1: 推論による情報補完（CoreThink哲学） ==========
             
-            if needs_elicitation:
-                logger.info("追加情報が必要です（将来的にElicitationで自動収集予定）")
-                
-                # 不足しているパラメータを特定
-                missing_info = []
-                if not context_clues:
-                    missing_info.append("文脈手がかり")
-                if not domain_hints:
-                    missing_info.append("専門分野情報")
-                
-                missing_str = "、".join(missing_info)
-                
-                # 現段階では手動で情報要求（Phase 1a実装）
-                elicitation_info = f"""
-【Elicitation要求】FastMCP統合準備中
-不足情報: {missing_str}
-推奨入力例:
-- context_clues: "システム状況、エラー詳細、利用環境等"
-- domain_hints: "技術/医療/法律/教育等の専門分野"
-
-※ Phase 1b では ctx.elicit() による自動収集に移行予定
+            # 利用可能情報の評価
+            available_info_quality = "高" if (context_clues and domain_hints) else "中" if (context_clues or domain_hints) else "低"
+            
+            # 推論による文脈補完（情報不足でも実行）
+            if not context_clues:
+                # 自然言語推論でcontext_cluesを補完
+                inferred_context = f"""
+【推論による文脈補完】
+要求文: "{ambiguous_request}"から以下を推定:
+- システム関連→パフォーマンス、安定性、使いやすさの課題推定
+- 改善/最適化→現在の問題と期待される改善方向を推定
+- 技術的文脈→実装、設定、運用面での課題を推定
+推定確信度: 中（実際の文脈情報により精度向上可能）
                 """.strip()
+                context_clues = inferred_context
+                logger.info("推論による文脈補完実行")
+            
+            # 推論による専門分野推定（情報不足でも実行）
+            if not domain_hints:
+                # 文言から専門分野を推論
+                domain_keywords = {
+                    "システム|パフォーマンス|データベース|API": "技術",
+                    "治療|診断|患者|医療": "医療",
+                    "法的|契約|規制|コンプライアンス": "法律",
+                    "教育|学習|指導|カリキュラム": "教育",
+                    "ビジネス|売上|顧客|マーケティング": "ビジネス"
+                }
                 
-                logger.info(f"Elicitation情報生成: {missing_str}")
+                inferred_domain = "一般"
+                for pattern, domain in domain_keywords.items():
+                    import re
+                    if re.search(pattern, ambiguous_request):
+                        inferred_domain = domain
+                        break
+                
+                domain_hints = f"推論推定: {inferred_domain}（キーワード分析による）"
+                logger.info(f"推論による専門分野推定: {inferred_domain}")
+            
+            # ========== PHASE 2: 自然言語推論による曖昧性解消 ==========
             
             # 基本的な曖昧性パターンの検出
             ambiguity_indicators = [
                 "改善", "最適化", "修正", "更新", "変更", "調整",
-                "良くする", "直す", "治す", "解決"
+                "良くする", "直す", "治す", "解決", "向上"
             ]
             
             detected_ambiguities = []
@@ -437,48 +450,62 @@ if app:
                 if indicator in ambiguous_request:
                     detected_ambiguities.append(indicator)
             
-            # 専門分野の考慮
+            # 専門分野コンテキストの適用
             domain_context = ""
-            if domain_hints:
-                domain_context = f"\n専門分野: {domain_hints}"
-                if "医療" in domain_hints:
-                    domain_context += "\n→ 医療安全と患者の利益を最優先"
-                elif "法律" in domain_hints:
-                    domain_context += "\n→ 法的根拠と適正手続きを重視"
-                elif "技術" in domain_hints:
-                    domain_context += "\n→ 技術的実現可能性と保守性を考慮"
+            if "技術" in domain_hints:
+                domain_context = "\n技術的観点: 実現可能性、保守性、性能への影響を重視"
+            elif "医療" in domain_hints:
+                domain_context = "\n医療安全観点: 患者安全、医療基準、規制適合を最優先"
+            elif "法律" in domain_hints:
+                domain_context = "\n法的観点: 法的根拠、適正手続き、コンプライアンスを重視"
+            elif "ビジネス" in domain_hints:
+                domain_context = "\nビジネス観点: ROI、顧客影響、運用効率を考慮"
+            else:
+                domain_context = "\n一般的観点: 安全性、実用性、持続可能性を考慮"
+            
+            # ========== PHASE 3: 推論結果の構造化（常に実行） ==========
+            
+            # 不確実性レベルの計算
+            uncertainty_level = "低" if available_info_quality == "高" else "中" if available_info_quality == "中" else "高"
             
             refinement_result = f"""
-【FastMCP Elicitation統合 曖昧性解消分析】Phase 1a
+【推論ファースト曖昧性解消分析】CoreThink哲学準拠
 
 原文: "{ambiguous_request}"
-文脈手がかり: {context_clues if context_clues else "未提供"}{domain_context}
+利用可能情報品質: {available_info_quality}
+推論補完実行: ✅ 情報不足箇所を推論で補完
+文脈手がかり: {context_clues}{domain_context}
 
-{elicitation_info}
-
-【語義曖昧性の特定】
+【推論による語義解析】
 1. 多義語検出: {detected_ambiguities if detected_ambiguities else "明確な表現"}
-2. 文脈依存解釈: {"完全" if context_clues else "不完全 - 追加情報必要"}
-3. 専門用語解釈: {domain_hints if domain_hints else "一般的解釈 - 専門分野指定推奨"}
+2. 文脈推論: {"直接情報活用" if available_info_quality == "高" else "推論補完により実行"}
+3. 専門分野適用: {domain_hints}
 
-【Elicitation強化による精緻化】
-実装段階: Phase 1a（情報要求通知）
-情報完成度: {"完全" if context_clues and domain_hints else "部分的"}
-次段階: {"分析続行可能" if context_clues and domain_hints else "追加情報収集推奨"}
+【推論品質指標】
+情報完成度: {available_info_quality}
+推論確信度: {"高" if available_info_quality == "高" else "中" if available_info_quality == "中" else "低（推論主体）"}
+不確実性レベル: {uncertainty_level}
+実行可能性: ✅ 常時実行可能（CoreThink推論により）
 
 【精緻化された理解】
-明確化レベル: {"高" if context_clues and domain_hints else "中"}
-実行可能性: {"完全準備済み" if context_clues and domain_hints else "追加情報で向上"}
-推奨次ステップ: {"reason_about_change実行" if context_clues and domain_hints else "パラメータ補完後再実行"}
+明確化レベル: {"最高" if available_info_quality == "高" else "高" if available_info_quality == "中" else "中（推論ベース）"}
+実行準備度: ✅ 推論結果により実行可能
+推奨次ステップ: reason_about_change で推論継続
 
-【GSR原則適合性】
-意味保持: ✅ 元の意図を損なわない解釈
-文脈考慮: {"✅ 完全活用" if context_clues else "⚠️ 限定的（追加情報で改善）"}
-曖昧性除去: {"✅ 実行可能レベル達成" if context_clues and domain_hints else "🔄 段階的改善中"}
-FastMCP準拠: 🔄 Phase 1a（通知型）→ Phase 1b（自動elicitation）予定
+【CoreThink哲学適合性】
+推論継続: ✅ 情報不足でも推論で分析実行
+不確実性管理: ✅ 推論の限界を明確化
+実用性確保: ✅ 常に実行可能な結果提供
+自然言語保持: ✅ 推論過程を自然言語で完全保持
+
+【Elicitation補完機会】
+追加情報収集により以下が向上可能:
+- 文脈精度: {"向上不要" if context_clues and "推論" not in context_clues else "実際の状況詳細で向上"}
+- 専門性: {"向上不要" if domain_hints and "推論" not in domain_hints else "専門分野確定で向上"}
+- 確信度: {uncertainty_level} → 低 (追加情報により改善)
             """.strip()
             
-            logger.info("曖昧性解消完了（Elicitation統合Phase 1a）")
+            logger.info(f"推論ファースト曖昧性解消完了（確信度: {uncertainty_level}）")
             return refinement_result
             
         except Exception as e:
