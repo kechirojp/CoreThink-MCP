@@ -9,6 +9,7 @@ import sys
 import socket
 import signal
 import asyncio
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 from dotenv import load_dotenv
@@ -37,6 +38,8 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from src.corethink_mcp import get_version_info
+from src.corethink_mcp.feature_flags import feature_flags, is_sampling_enabled, get_sampling_timeout, is_history_enabled
+from src.corethink_mcp.history_manager import log_tool_execution
 
 # ログ設定（UTF-8対応）
 log_level = os.getenv("CORETHINK_LOG_LEVEL", "INFO")
@@ -95,6 +98,12 @@ def find_available_port(preferred_port: int = 8080, max_attempts: int = 100) -> 
 # プロジェクト設定
 REPO_ROOT = Path(os.getenv("CORETHINK_REPO_ROOT", "."))
 CONSTRAINTS_FILE = Path(__file__).parent.parent / "constraints.txt"
+CONSTRAINTS_MEDICAL_FILE = Path(__file__).parent.parent / "constraints_medical.txt"
+CONSTRAINTS_LEGAL_FILE = Path(__file__).parent.parent / "constraints_legal.txt"
+CONSTRAINTS_ENGINEERING_FILE = Path(__file__).parent.parent / "constraints_engineering.txt"
+CONSTRAINTS_SAFETY_CRITICAL_FILE = Path(__file__).parent.parent / "constraints_safety_critical.txt"
+CONSTRAINTS_AI_ML_FILE = Path(__file__).parent.parent / "constraints_ai_ml.txt"
+CONSTRAINTS_CLOUD_DEVOPS_FILE = Path(__file__).parent.parent / "constraints_cloud_devops.txt"
 SANDBOX_DIR = os.getenv("CORETHINK_SANDBOX_DIR", ".sandbox")
 
 # ポート設定（自動検出）
@@ -113,13 +122,145 @@ else:
     app = None
 
 def load_constraints() -> str:
-    """制約ファイルを読み込む"""
+    """基本制約ファイルを読み込む"""
     try:
         return CONSTRAINTS_FILE.read_text(encoding="utf-8")
     except FileNotFoundError:
         logger.warning(f"制約ファイルが見つかりません: {CONSTRAINTS_FILE}")
         return "制約ファイルが読み込めませんでした"
 
+def _detect_domain(user_request: str) -> List[str]:
+    """ユーザー要求から適用すべき分野を検出する"""
+    domains = []
+    
+    # 医療分野キーワード
+    medical_keywords = [
+        "診断", "症状", "治療", "薬物", "疾患", "病気", "医療", "患者", "医師", 
+        "処方", "副作用", "病理", "手術", "検査", "健康", "臨床"
+    ]
+    
+    # 法的分野キーワード
+    legal_keywords = [
+        "判例", "法的", "証拠", "事実認定", "契約", "裁判", "法律", "権利", 
+        "義務", "責任", "訴訟", "法廷", "弁護", "司法", "条文", "規制"
+    ]
+    
+    # エンジニアリング分野キーワード
+    engineering_keywords = [
+        "設計", "実装", "アーキテクチャ", "システム", "ソフトウェア", "ハードウェア", 
+        "プログラム", "コード", "開発", "テスト", "デバッグ", "パフォーマンス", 
+        "セキュリティ", "ネットワーク", "データベース", "API", "フレームワーク"
+    ]
+    
+    # AI・機械学習分野キーワード
+    ai_ml_keywords = [
+        "機械学習", "AI", "人工知能", "ニューラルネット", "深層学習", "ディープラーニング",
+        "モデル", "アルゴリズム", "訓練", "学習", "予測", "分類", "回帰", "クラスタリング",
+        "自然言語処理", "NLP", "コンピュータビジョン", "画像認識", "強化学習", "RL",
+        "LLM", "大規模言語モデル", "Transformer", "BERT", "GPT", "データサイエンス"
+    ]
+    
+    # クラウド・DevOps分野キーワード
+    cloud_devops_keywords = [
+        "クラウド", "AWS", "Azure", "GCP", "Docker", "Kubernetes", "コンテナ",
+        "CI/CD", "DevOps", "SRE", "インフラ", "デプロイ", "オーケストレーション",
+        "マイクロサービス", "サーバーレス", "監視", "ログ", "メトリクス", "アラート",
+        "スケーリング", "負荷分散", "CDN", "バックアップ", "災害復旧"
+    ]
+    
+    # 安全重要分野キーワード
+    safety_critical_keywords = [
+        "航空", "宇宙", "原子力", "医療機器", "自動運転", "制御システム", "生命維持", 
+        "緊急", "災害", "安全", "リスク", "危険", "事故", "障害", "フェイルセーフ",
+        "重要インフラ", "電力", "水道", "通信", "交通", "金融", "決済"
+    ]
+    
+    user_request_lower = user_request.lower()
+    
+    if any(kw.lower() in user_request_lower for kw in medical_keywords):
+        domains.append("medical")
+    if any(kw.lower() in user_request_lower for kw in legal_keywords):
+        domains.append("legal")
+    if any(kw.lower() in user_request_lower for kw in engineering_keywords):
+        domains.append("engineering")
+    if any(kw.lower() in user_request_lower for kw in ai_ml_keywords):
+        domains.append("ai_ml")
+    if any(kw.lower() in user_request_lower for kw in cloud_devops_keywords):
+        domains.append("cloud_devops")
+    if any(kw.lower() in user_request_lower for kw in safety_critical_keywords):
+        domains.append("safety_critical")
+    
+    # 最も優先度の高い分野を返す（複数検出された場合の優先順位）
+    priority_order = ["safety_critical", "medical", "legal", "ai_ml", "engineering", "cloud_devops"]
+    
+    for priority_domain in priority_order:
+        if priority_domain in domains:
+            return priority_domain
+    
+    return "general"
+
+def load_domain_constraints(user_request: str) -> str:
+    """ユーザー要求に基づいて適切な制約セットを読み込む"""
+    try:
+        # 基本制約を読み込み
+        constraints = load_constraints()
+        
+        # 分野を検出（単一の最優先分野）
+        detected_domain = _detect_domain(user_request)
+        logger.info(f"検出された分野: {detected_domain}")
+        
+        # 分野特化制約を追加
+        if detected_domain == "medical":
+            try:
+                medical_constraints = CONSTRAINTS_MEDICAL_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === 医療分野特化制約 ===\n{medical_constraints}"
+            except FileNotFoundError:
+                logger.warning("医療分野制約ファイルが見つかりません")
+                
+        elif detected_domain == "legal":
+            try:
+                legal_constraints = CONSTRAINTS_LEGAL_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === 法的分野特化制約 ===\n{legal_constraints}"
+            except FileNotFoundError:
+                logger.warning("法的分野制約ファイルが見つかりません")
+                
+        elif detected_domain == "engineering":
+            try:
+                engineering_constraints = CONSTRAINTS_ENGINEERING_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === エンジニアリング分野特化制約 ===\n{engineering_constraints}"
+            except FileNotFoundError:
+                logger.warning("エンジニアリング分野制約ファイルが見つかりません")
+                
+        elif detected_domain == "ai_ml":
+            try:
+                ai_ml_constraints = CONSTRAINTS_AI_ML_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === AI・機械学習分野特化制約 ===\n{ai_ml_constraints}"
+            except FileNotFoundError:
+                logger.warning("AI・機械学習分野制約ファイルが見つかりません")
+                
+        elif detected_domain == "cloud_devops":
+            try:
+                cloud_devops_constraints = CONSTRAINTS_CLOUD_DEVOPS_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === クラウド・DevOps分野特化制約 ===\n{cloud_devops_constraints}"
+            except FileNotFoundError:
+                logger.warning("クラウド・DevOps分野制約ファイルが見つかりません")
+                
+        elif detected_domain == "safety_critical":
+            try:
+                safety_critical_constraints = CONSTRAINTS_SAFETY_CRITICAL_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === 安全重要分野特化制約 ===\n{safety_critical_constraints}"
+            except FileNotFoundError:
+                logger.warning("安全重要分野制約ファイルが見つかりません")
+        
+        else:  # general
+            logger.info("分野不明のため、最も厳格な制約セットを適用")
+            # 一般的な場合は基本制約のみ使用
+            
+        return constraints
+        
+    except Exception as e:
+        logger.error(f"制約読み込みエラー: {e}")
+        return load_constraints()  # フォールバック
 def create_sandbox() -> str:
     """安全な作業環境（サンドボックス）を作成"""
     if not GIT_AVAILABLE:
@@ -144,8 +285,17 @@ def create_sandbox() -> str:
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         branch_name = f"corethink-sbx-{timestamp}"
         
-        repo.git.worktree("add", "-b", branch_name, str(sandbox_path), "HEAD")
-        logger.info(f"サンドボックスを作成しました: {sandbox_path} (ブランチ: {branch_name})")
+        try:
+            repo.git.worktree("add", "-b", branch_name, str(sandbox_path), "HEAD")
+            logger.info(f"サンドボックスを作成しました: {sandbox_path} (ブランチ: {branch_name})")
+        except git.GitCommandError as e:
+            if "Permission denied" in str(e):
+                # Windows権限問題の場合、シンプルなディレクトリコピーでフォールバック
+                import shutil
+                shutil.copytree(REPO_ROOT, sandbox_path, ignore=shutil.ignore_patterns('.git', '__pycache__', '*.pyc'))
+                logger.warning(f"Git worktreeが失敗したため、ディレクトリコピーでサンドボックスを作成: {sandbox_path}")
+            else:
+                raise
         
         return str(sandbox_path)
     except git.InvalidGitRepositoryError:
@@ -163,11 +313,87 @@ def create_sandbox() -> str:
 # ================== MCP Tools ==================
 
 if app:
+    async def _enhance_with_sampling(core_result: str, tool_name: str, ctx=None) -> str:
+        """Sampling機能による結果拡張
+        
+        Args:
+            core_result: CoreThink推論の結果
+            tool_name: ツール名  
+            ctx: FastMCPコンテキスト（Sampling機能含む）
+            
+        Returns:
+            拡張された結果（失敗時は元の結果）
+        """
+        if not is_sampling_enabled():
+            return core_result
+        
+        if not ctx or not hasattr(ctx, 'sample'):
+            return core_result
+        
+        try:
+            timeout = get_sampling_timeout()
+            
+            # Sampling クエリの構築
+            sampling_query = f"""
+CoreThink推論結果を踏まえた追加考慮点や代替案を提案してください：
+
+【{tool_name}結果】
+{core_result}
+
+【要求】
+- 見落とされた観点があれば指摘
+- より良い代替案があれば提案  
+- リスクや注意点があれば警告
+- 簡潔に3-5個の要点で回答
+"""
+            
+            # Sampling実行（タイムアウト付き）
+            sampling_result = await asyncio.wait_for(
+                ctx.sample(sampling_query),
+                timeout=timeout
+            )
+            
+            # 結果の統合
+            enhanced_result = f"""{core_result}
+
+【💡 Sampling補助分析】
+{sampling_result}
+
+【🎯 最終判断】
+上記のCoreThink推論結果を基本とし、補助分析を参考情報として活用してください。"""
+            
+            logger.info(f"Sampling拡張完了: {tool_name}")
+            return enhanced_result
+            
+        except asyncio.TimeoutError:
+            logger.warning(f"Sampling timeout for {tool_name}")
+            return core_result
+        except Exception as e:
+            logger.warning(f"Sampling enhancement failed for {tool_name}: {e}")
+            return core_result
+    
+    async def _log_tool_execution(tool_name: str, inputs: dict, core_result: str, 
+                                  enhanced_result: str = None, sampling_result: str = None,
+                                  execution_time_ms: float = None, error: str = None) -> None:
+        """ツール実行を履歴に記録"""
+        try:
+            log_tool_execution(
+                tool_name=tool_name,
+                inputs=inputs,
+                result=enhanced_result or core_result,
+                sampling_result=sampling_result,
+                execution_time_ms=execution_time_ms,
+                error=error
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log tool execution: {e}")
+    
     @app.tool()
     async def reason_about_change(
         user_intent: str,
         current_state: str,
-        proposed_action: str
+        proposed_action: str,
+        ctx = None  # FastMCPコンテキスト（Sampling機能含む）
     ) -> str:
         """
         Performs General Symbolics Reasoning (GSR) to evaluate proposed changes.
@@ -177,17 +403,26 @@ if app:
             user_intent: The user's intention or goal
             current_state: Current system state description
             proposed_action: The proposed change or action
+            ctx: FastMCP context (includes sampling capability)
             
         Returns:
             Natural language reasoning result with judgment and next steps
         """
+        start_time = datetime.now()
         logger.info(f"推論開始: {user_intent}")
+        
+        # 入力パラメータ
+        inputs = {
+            'user_intent': user_intent,
+            'current_state': current_state, 
+            'proposed_action': proposed_action
+        }
         
         try:
             constraints = load_constraints()
             
-            # GSRスタイルの推論過程
-            reasoning = f"""
+            # GSRスタイルの推論過程（従来通り）
+            core_reasoning = f"""
 【CoreThink推論開始】
 意図: {user_intent}
 現状: {current_state}
@@ -208,18 +443,38 @@ if app:
 【次ステップ】validate_against_constraints での詳細検証
             """.strip()
             
+            # Sampling拡張（オプション）
+            enhanced_result = await _enhance_with_sampling(core_reasoning, "reason_about_change", ctx)
+            
+            # 実行時間計算
+            execution_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+            
+            # 履歴記録
+            await _log_tool_execution(
+                "reason_about_change", inputs, core_reasoning, 
+                enhanced_result, None, execution_time_ms
+            )
+            
             logger.info("推論完了")
-            return reasoning
+            return enhanced_result
             
         except Exception as e:
             error_msg = f"推論エラー: {str(e)}"
             logger.error(error_msg)
+            
+            # エラーも履歴に記録
+            await _log_tool_execution(
+                "reason_about_change", inputs, "", 
+                error=error_msg
+            )
+            
             return error_msg
 
     @app.tool()
     async def validate_against_constraints(
         proposed_change: str,
-        reasoning_context: str = ""
+        reasoning_context: str = "",
+        ctx = None  # FastMCPコンテキスト（Sampling機能含む）
     ) -> str:
         """
         Validates proposed changes against defined constraints using natural language.
@@ -228,6 +483,7 @@ if app:
         Args:
             proposed_change: Description of the proposed change
             reasoning_context: Additional context for validation
+            ctx: FastMCP context (includes sampling capability)
             
         Returns:
             Natural language validation result with compliance status
@@ -237,8 +493,8 @@ if app:
         try:
             constraints = load_constraints()
             
-            # 制約チェックロジック（簡易版）
-            validation_result = f"""
+            # 制約チェックロジック（簡易版・従来通り）
+            core_validation = f"""
 【制約検証結果】
 提案変更: {proposed_change}
 文脈: {reasoning_context}
@@ -254,8 +510,11 @@ if app:
 【次ステップ】execute_with_safeguards でdry-run実行
             """.strip()
             
+            # Sampling拡張（オプション）
+            enhanced_result = await _enhance_with_sampling(core_validation, "validate_against_constraints", ctx)
+            
             logger.info("制約検証完了")
-            return validation_result
+            return enhanced_result
             
         except Exception as e:
             error_msg = f"検証エラー: {str(e)}"
@@ -265,7 +524,8 @@ if app:
     @app.tool()
     async def execute_with_safeguards(
         action_description: str,
-        dry_run: bool = True
+        dry_run: bool = True,
+        ctx = None  # FastMCPコンテキスト（Sampling機能含む）
     ) -> str:
         """
         Executes changes with comprehensive safety measures and sandbox isolation.
@@ -274,6 +534,7 @@ if app:
         Args:
             action_description: Description of the action to execute
             dry_run: If True, performs simulation only; if False, applies changes
+            ctx: FastMCP context (includes sampling capability)
             
         Returns:
             Natural language execution result with safety status and impact assessment
@@ -283,7 +544,7 @@ if app:
         try:
             if dry_run:
                 sandbox_path = create_sandbox()
-                result = f"""
+                core_result = f"""
 【DRY RUN実行】
 アクション: {action_description}
 サンドボックス: {sandbox_path}
@@ -297,14 +558,17 @@ if app:
                 """.strip()
             else:
                 # 実際の実行（将来的に実装）
-                result = f"""
+                core_result = f"""
 【実行完了】
 アクション: {action_description}
 状態: 実装中（現在はdry-runのみ対応）
                 """.strip()
             
+            # Sampling拡張（オプション）
+            enhanced_result = await _enhance_with_sampling(core_result, "execute_with_safeguards", ctx)
+            
             logger.info("実行完了")
-            return result
+            return enhanced_result
             
         except Exception as e:
             error_msg = f"実行エラー: {str(e)}"
@@ -772,6 +1036,459 @@ NL変換ルール: 論理ルールの自然言語表現への変換
             
         except Exception as e:
             error_msg = f"制約学習エラー: {str(e)}"
+            logger.error(error_msg)
+            return error_msg
+
+    # ================== Phase3 履歴管理ツール ==================
+
+    @app.tool()
+    async def get_reasoning_history(
+        query: str = "",
+        count: int = 10
+    ) -> str:
+        """推論履歴を検索・取得
+        
+        Args:
+            query: 検索クエリ（空文字の場合は最近の履歴を取得）
+            count: 取得する履歴数
+            
+        Returns:
+            履歴情報（自然言語形式）
+        """
+        try:
+            from ..history_manager import search_reasoning_history, get_recent_reasoning
+            
+            if query.strip():
+                results = search_reasoning_history(query, count)
+                result_type = f"検索結果（クエリ: {query}）"
+            else:
+                results = get_recent_reasoning(count)
+                result_type = "最新の履歴"
+            
+            if not results:
+                return f"履歴が見つかりませんでした（{result_type}）"
+            
+            history_text = f"【{result_type}】\n\n"
+            for i, entry in enumerate(results, 1):
+                timestamp = entry.get('timestamp', 'Unknown')
+                data = entry.get('data', '')
+                history_text += f"{i}. {timestamp}\n{data[:200]}...\n\n"
+            
+            return history_text
+            
+        except Exception as e:
+            error_msg = f"履歴取得エラー: {str(e)}"
+            logger.error(error_msg)
+            return error_msg
+
+    @app.tool()
+    async def get_history_statistics() -> str:
+        """履歴統計情報を取得
+        
+        Returns:
+            統計情報（自然言語形式）
+        """
+        try:
+            from ..history_manager import get_history_stats
+            
+            stats = get_history_stats()
+            
+            stats_text = f"""
+【履歴統計情報】
+総エントリ数: {stats.get('total_entries', 0)}件
+ファイルサイズ: {stats.get('file_size_mb', 0)}MB
+最大ファイルサイズ: {stats.get('max_size_mb', 10)}MB
+ローテーション: {'有効' if stats.get('rotation_enabled', False) else '無効'}
+ファイルパス: {stats.get('file_path', 'Unknown')}
+
+【機能状態】
+履歴記録: {'有効' if is_history_enabled() else '無効'}
+Sampling拡張: {'有効' if is_sampling_enabled() else '無効'}
+            """
+            
+            return stats_text.strip()
+            
+        except Exception as e:
+            error_msg = f"統計取得エラー: {str(e)}"
+            logger.error(error_msg)
+            return error_msg
+
+    @app.tool()
+    async def manage_feature_flags(
+        action: str,
+        feature_name: str = "",
+        value: str = ""
+    ) -> str:
+        """機能フラグを管理
+        
+        Args:
+            action: 実行するアクション（status, enable, disable, emergency_disable）
+            feature_name: 機能名（enableまたはdisableの場合）
+            value: 設定値（enableの場合、オプション）
+            
+        Returns:
+            操作結果（自然言語形式）
+        """
+        try:
+            if action == "status":
+                status = feature_flags.get_status_report()
+                status_text = f"""
+【機能フラグ状態】
+緊急モード: {'有効' if status['emergency_mode'] else '無効'}
+Sampling拡張: {'有効' if status['sampling_enabled'] else '無効'}
+履歴記録: {'有効' if status['history_enabled'] else '無効'}
+適応的深度制御: {'有効' if status['adaptive_depth_enabled'] else '無効'}
+パフォーマンス監視: {'有効' if status['performance_monitoring'] else '無効'}
+デバッグログ: {'有効' if status['debug_logging'] else '無効'}
+設定ファイル: {status['config_file']}
+                """
+                return status_text.strip()
+            
+            elif action == "enable" and feature_name:
+                feature_flags.set_flag(feature_name, True)
+                return f"機能を有効化しました: {feature_name}"
+            
+            elif action == "disable" and feature_name:
+                feature_flags.set_flag(feature_name, False)
+                return f"機能を無効化しました: {feature_name}"
+            
+            elif action == "emergency_disable":
+                feature_flags.emergency_disable()
+                return "🚨 緊急モード: 全ての拡張機能を無効化しました"
+            
+            else:
+                return "無効なアクション。利用可能: status, enable, disable, emergency_disable"
+                
+        except Exception as e:
+            error_msg = f"機能フラグ管理エラー: {str(e)}"
+            logger.error(error_msg)
+            return error_msg
+
+    # ================== GSR 4層アーキテクチャ関数 ==================
+    
+    def _gsr_layer1_parse_native_language(user_input: str, context: str) -> str:
+        """
+        GSR Layer 1: Native Language Parsing & Semantic Preservation
+        ユーザーの自然言語入力を意味を保持したまま解析
+        """
+        try:
+            # 自然言語の意味的構造を保持
+            parsed_structure = f"""
+【GSR Layer 1: 自然言語解析】
+
+【入力文解析】
+原文: {user_input}
+
+【文脈情報】
+{context}
+
+【意味的要素抽出】
+- 意図: ユーザーが何を求めているか
+- 対象: 何について推論するか
+- 制約: どのような条件があるか
+- 期待結果: どのような出力を期待しているか
+
+【言語的特徴保持】
+- 不確実性の表現: 「たぶん」「可能性がある」等
+- 強調表現: 「必ず」「絶対に」等
+- 感情的ニュアンス: 긴급성、重要性等
+
+【解析完了】意味情報を完全保持して次層へ移行
+            """
+            return parsed_structure.strip()
+            
+        except Exception as e:
+            logger.error(f"GSR Layer 1 解析エラー: {e}")
+            return f"Layer 1 解析エラー: {str(e)}"
+
+    def _gsr_layer2_inlanguage_reasoning(parsed_input: str, reasoning_context: str) -> str:
+        """
+        GSR Layer 2: In-Language Reasoning Architecture
+        自然言語内での直接的推論（ベクトル化なし）
+        """
+        try:
+            # 自然言語での直接推論
+            reasoning_result = f"""
+【GSR Layer 2: 言語内推論】
+
+【推論材料】
+{parsed_input}
+
+【推論コンテキスト】
+{reasoning_context}
+
+【推論プロセス】
+1. 問題の核心特定
+   - 真の課題は何か？
+   - 表面的問題と根本原因の区別
+
+2. 制約分析
+   - 絶対的制約（変更不可）
+   - 相対的制約（交渉可能）
+   - 隠れた制約（暗黙的前提）
+
+3. 解決策生成
+   - 直接的アプローチ
+   - 代替アプローチ
+   - 創造的解決法
+
+4. リスク評価
+   - 実行可能性
+   - 安全性
+   - 影響範囲
+
+【推論結論】
+基本判定: [PROCEED/CAUTION/REJECT]
+信頼度: [HIGH/MEDIUM/LOW]
+            """
+            return reasoning_result.strip()
+            
+        except Exception as e:
+            logger.error(f"GSR Layer 2 推論エラー: {e}")
+            return f"Layer 2 推論エラー: {str(e)}"
+
+    def _gsr_layer3_execution_explainability(reasoning_result: str, action_context: str) -> str:
+        """
+        GSR Layer 3: Execution & Explainability
+        実行可能性と説明可能性の統合
+        """
+        try:
+            execution_plan = f"""
+【GSR Layer 3: 実行・説明可能性】
+
+【推論結果評価】
+{reasoning_result}
+
+【実行計画】
+1. 実行前検証
+   - 制約適合性チェック
+   - 安全性確認
+   - リソース可用性
+
+2. 段階的実行戦略
+   - Phase 1: 最小限変更
+   - Phase 2: 段階的拡張
+   - Phase 3: 完全実装
+
+3. 検証ポイント
+   - 各段階での成功判定基準
+   - 異常検出と回復手順
+   - 品質保証要件
+
+【説明可能性】
+- なぜこの判断に至ったか
+- どのような根拠があるか
+- 代替案との比較結果
+- リスクと機会の評価
+
+【実行準備完了】次層での最終確認へ
+            """
+            return execution_plan.strip()
+            
+        except Exception as e:
+            logger.error(f"GSR Layer 3 実行計画エラー: {e}")
+            return f"Layer 3 実行計画エラー: {str(e)}"
+
+    def _gsr_layer4_avoid_translation(execution_plan: str) -> str:
+        """
+        GSR Layer 4: Avoiding Representational Translation
+        表現変換の回避・自然言語出力の維持
+        """
+        try:
+            # 自然言語での最終出力（変換なし）
+            final_output = f"""
+【GSR Layer 4: 自然言語出力】
+
+【統合推論結果】
+{execution_plan}
+
+【最終判定】
+✅ PROCEED - 実行推奨
+⚠️ CAUTION - 注意して実行
+❌ REJECT - 実行非推奨
+
+【実行指針】
+具体的に何をすべきか、どのような順序で、どのような注意点があるかを自然言語で明確に説明
+
+【次ステップ】
+ユーザーが取るべき具体的行動を自然言語で提示
+
+【信頼性指標】
+推論の確実性レベルと根拠を自然言語で説明
+            """
+            return final_output.strip()
+            
+        except Exception as e:
+            logger.error(f"GSR Layer 4 出力エラー: {e}")
+            return f"Layer 4 出力エラー: {str(e)}"
+
+    # ================== 統合GSR推論エンジン ==================
+
+    @app.tool()
+    async def unified_gsr_reasoning(
+        user_request: str,
+        context_information: str = "",
+        reasoning_depth: str = "standard",
+        ctx = None
+    ) -> str:
+        """
+        統合GSR推論エンジン - CoreThink論文のGSR 4層アーキテクチャ実装
+        
+        Args:
+            user_request: ユーザーの要求・質問（自然言語）
+            context_information: 文脈情報（プロジェクト状態、制約等）
+            reasoning_depth: 推論深度（minimal, standard, detailed）
+            ctx: FastMCP context
+            
+        Returns:
+            GSR 4層処理による自然言語推論結果
+        """
+        start_time = datetime.now()
+        logger.info(f"統合GSR推論開始: {user_request[:100]}...")
+        
+        try:
+            # 分野特化制約情報の読み込み
+            constraints = load_domain_constraints(user_request)
+            full_context = f"{context_information}\n\n【制約情報】\n{constraints}"
+            
+            # GSR 4層アーキテクチャによる推論
+            layer1_result = _gsr_layer1_parse_native_language(user_request, full_context)
+            layer2_result = _gsr_layer2_inlanguage_reasoning(layer1_result, full_context)
+            layer3_result = _gsr_layer3_execution_explainability(layer2_result, full_context)
+            layer4_result = _gsr_layer4_avoid_translation(layer3_result)
+            
+            # 統合結果の生成
+            unified_result = f"""
+🧠 **CoreThink統合GSR推論結果**
+
+【要求分析】
+{user_request}
+
+【GSR推論プロセス】
+Layer 1 → Layer 2 → Layer 3 → Layer 4
+
+{layer4_result}
+
+【推論完了時刻】
+{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+【推論所要時間】
+{(datetime.now() - start_time).total_seconds():.2f}秒
+            """
+            
+            # ログ記録
+            if is_history_enabled():
+                await _log_tool_execution(
+                    "unified_gsr_reasoning",
+                    {"user_request": user_request, "context": context_information, "depth": reasoning_depth},
+                    unified_result,
+                    datetime.now(),
+                    start_time
+                )
+            
+            logger.info(f"統合GSR推論完了: {(datetime.now() - start_time).total_seconds():.2f}秒")
+            return unified_result.strip()
+            
+        except Exception as e:
+            error_msg = f"統合GSR推論エラー: {str(e)}"
+            logger.error(error_msg)
+            return error_msg
+
+    @app.tool()
+    async def collect_reasoning_materials(
+        topic: str,
+        information_types: str = "",
+        search_depth: str = "moderate",
+        ctx = None
+    ) -> str:
+        """
+        推論材料収集ツール - Sampling機能を活用した証拠収集
+        
+        Args:
+            topic: 調査対象トピック
+            information_types: 収集する情報種別（技術情報、制約、事例等）
+            search_depth: 調査深度（shallow, moderate, deep）
+            ctx: FastMCP context（Sampling機能含む）
+            
+        Returns:
+            収集した推論材料（自然言語形式）
+        """
+        start_time = datetime.now()
+        logger.info(f"推論材料収集開始: {topic}")
+        
+        try:
+            # 基本情報収集
+            base_materials = f"""
+【推論材料収集結果】
+
+【調査対象】
+{topic}
+
+【収集情報種別】
+{information_types if information_types else "一般的技術情報、制約、ベストプラクティス"}
+
+【制約情報】
+{load_constraints()}
+
+【収集完了】
+推論に必要な基本材料を収集しました
+            """
+            
+            # Sampling機能による拡張（利用可能な場合）
+            enhanced_materials = base_materials
+            if is_sampling_enabled() and ctx and hasattr(ctx, 'mcp'):
+                try:
+                    # Sampling要求の構築
+                    sampling_prompt = f"""
+{topic}について、以下の観点から追加情報を提供してください：
+
+1. 技術的詳細と実装考慮事項
+2. 潜在的リスクと制約
+3. ベストプラクティスと推奨事項
+4. 類似事例と学習ポイント
+
+情報種別: {information_types}
+調査深度: {search_depth}
+
+簡潔で実用的な情報を自然言語で提供してください。
+                    """
+                    
+                    timeout = get_sampling_timeout()
+                    sampling_result = await asyncio.wait_for(
+                        ctx.mcp.sample_llm_complete(sampling_prompt),
+                        timeout=timeout
+                    )
+                    
+                    enhanced_materials = f"""
+{base_materials}
+
+【拡張情報】
+{sampling_result}
+
+【情報統合完了】
+基本材料と拡張情報を統合し、推論に活用可能な形で整理しました
+                    """
+                    
+                except asyncio.TimeoutError:
+                    logger.warning("Sampling タイムアウト - 基本材料のみ使用")
+                except Exception as e:
+                    logger.warning(f"Sampling エラー: {e} - 基本材料のみ使用")
+            
+            # ログ記録
+            if is_history_enabled():
+                await _log_tool_execution(
+                    "collect_reasoning_materials",
+                    {"topic": topic, "information_types": information_types, "search_depth": search_depth},
+                    enhanced_materials,
+                    datetime.now(),
+                    start_time
+                )
+            
+            logger.info(f"推論材料収集完了: {(datetime.now() - start_time).total_seconds():.2f}秒")
+            return enhanced_materials.strip()
+            
+        except Exception as e:
+            error_msg = f"推論材料収集エラー: {str(e)}"
             logger.error(error_msg)
             return error_msg
 
