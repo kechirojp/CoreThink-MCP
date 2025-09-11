@@ -43,5 +43,10 @@ SHOULD: 敵対的攻撃に対する堅牢性を評価する
 ## 分野特化制約適用ルール
 MEDICAL: constraints_medical.txtを医療関連判断時に適用
 LEGAL: constraints_legal.txtを法的判断時に適用
+FINANCIAL: constraints_financial.txtを金融・融資関連判断時に適用
+AI_ML: constraints_ai_ml.txtをAI・機械学習関連判断時に適用
+CLOUD_DEVOPS: constraints_cloud_devops.txtをクラウド・DevOps関連判断時に適用
+ENGINEERING: constraints_engineering.txtを工学・エンジニアリング関連判断時に適用
+SAFETY_CRITICAL: constraints_safety_critical.txtを安全重要システム関連判断時に適用
 GENERAL: 分野不明時は最も厳格な制約セットを適用
 MUST: 分野横断的問題では複数制約セットを統合適用する

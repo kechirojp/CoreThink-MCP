@@ -97,8 +97,12 @@ def find_available_port(preferred_port: int = 8080, max_attempts: int = 100) -> 
 
 # プロジェクト設定
 REPO_ROOT = Path(os.getenv("CORETHINK_REPO_ROOT", "."))
-CONSTRAINTS_DIR = Path(__file__).parent.parent / "constraints"
-CONSTRAINTS_FILE = CONSTRAINTS_DIR / "constraints.txt"
+CONSTRAINTS_FILE = Path(__file__).parent.parent / "constraints.txt"
+CONSTRAINTS_MEDICAL_FILE = Path(__file__).parent.parent / "constraints_medical.txt"
+CONSTRAINTS_LEGAL_FILE = Path(__file__).parent.parent / "constraints_legal.txt"
+CONSTRAINTS_ENGINEERING_FILE = Path(__file__).parent.parent / "constraints_engineering.txt"
+CONSTRAINTS_SAFETY_CRITICAL_FILE = Path(__file__).parent.parent / "constraints_safety_critical.txt"
+CONSTRAINTS_AI_ML_FILE = Path(__file__).parent.parent / "constraints_ai_ml.txt"
 CONSTRAINTS_CLOUD_DEVOPS_FILE = Path(__file__).parent.parent / "constraints_cloud_devops.txt"
 SANDBOX_DIR = os.getenv("CORETHINK_SANDBOX_DIR", ".sandbox")
 
@@ -117,41 +121,6 @@ else:
     # 代替実装
     app = None
 
-# キーワードキャッシュ（起動時に一度だけ読み込み）
-_DOMAIN_KEYWORDS_CACHE = {}
-
-def _load_domain_keywords() -> dict[str, list[str]]:
-    """全分野のキーワードを一度に読み込んでキャッシュする"""
-    if _DOMAIN_KEYWORDS_CACHE:
-        return _DOMAIN_KEYWORDS_CACHE
-    
-    # 利用可能な分野リスト
-    domains = ["medical", "legal", "financial", "engineering", "ai_ml", "cloud_devops", "safety_critical"]
-    
-    for domain in domains:
-        try:
-            constraints_dir = CONSTRAINTS_FILE.parent
-            domain_file = constraints_dir / f"constraints_{domain}.txt"
-            
-            if domain_file.exists():
-                constraints_content, keywords = parse_constraint_file(domain_file)
-                if keywords:
-                    _DOMAIN_KEYWORDS_CACHE[domain] = keywords
-                    logger.debug(f"分野 {domain} のキーワード {len(keywords)}個を読み込み")
-                else:
-                    logger.warning(f"分野 {domain} にキーワードが定義されていません")
-            else:
-                logger.warning(f"分野ファイルが見つかりません: {domain_file}")
-        except Exception as e:
-            logger.error(f"分野 {domain} のキーワード読み込みエラー: {e}")
-    
-    # フォールバック用ハードコードキーワード（最小限）
-    if not _DOMAIN_KEYWORDS_CACHE.get("medical"):
-        _DOMAIN_KEYWORDS_CACHE["medical"] = ["診断", "症状", "治療", "医療", "患者"]
-    
-    logger.info(f"キーワードキャッシュ初期化完了: {len(_DOMAIN_KEYWORDS_CACHE)} 分野")
-    return _DOMAIN_KEYWORDS_CACHE
-
 def load_constraints() -> str:
     """基本制約ファイルを読み込む"""
     try:
@@ -160,94 +129,138 @@ def load_constraints() -> str:
         logger.warning(f"制約ファイルが見つかりません: {CONSTRAINTS_FILE}")
         return "制約ファイルが読み込めませんでした"
 
-def parse_constraint_file(file_path: Path) -> tuple[str, list[str]]:
-    """制約ファイルから制約内容とキーワードを分離して読み込む
-    
-    Returns:
-        tuple[str, list[str]]: (制約内容, キーワードリスト)
-    """
-    try:
-        content = file_path.read_text(encoding="utf-8")
-        
-        # KEYWORDSセクションを分離
-        if "## KEYWORDS" in content:
-            parts = content.split("## KEYWORDS", 1)
-            constraints_content = parts[0].strip()
-            keywords_section = parts[1].strip()
-            
-            # キーワード行を解析（コメント行をスキップ）
-            keywords = []
-            for line in keywords_section.split('\n'):
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    # カンマ区切りのキーワードを分割
-                    keywords.extend([kw.strip() for kw in line.split(',') if kw.strip()])
-            
-            return constraints_content, keywords
-        else:
-            # KEYWORDSセクションがない場合は制約のみ返す
-            return content, []
-            
-    except Exception as e:
-        logger.error(f"制約ファイル解析エラー ({file_path}): {e}")
-        return "", []
-
-def load_domain_constraints(domain: str) -> str:
-    """分野別制約ファイルを読み込む"""
-    try:
-        constraints_dir = CONSTRAINTS_FILE.parent
-        domain_file = constraints_dir / f"constraints_{domain}.txt"
-        
-        if domain_file.exists():
-            return domain_file.read_text(encoding="utf-8")
-        else:
-            logger.warning(f"分野別制約ファイルが見つかりません: {domain_file}")
-            return ""
-    except Exception as e:
-        logger.error(f"分野別制約ファイル読み込みエラー: {e}")
-        return ""
-
-def load_combined_constraints(user_request: str = "") -> str:
-    """基本制約と分野別制約を組み合わせて読み込む"""
-    # 基本制約を読み込む
-    base_constraints = load_constraints()
-    
-    # ユーザー要求から分野を検出
-    if user_request:
-        domain = _detect_domain(user_request)
-        if domain != "general":
-            domain_constraints = load_domain_constraints(domain)
-            if domain_constraints:
-                combined = f"{base_constraints}\n\n## 分野特化制約（{domain.upper()}）\n{domain_constraints}"
-                logger.info(f"分野別制約を適用: {domain}")
-                return combined
-    
-    return base_constraints
-
-def _detect_domain(user_request: str) -> str:
-    """ユーザー要求から適用すべき分野を検出する（外部ファイルベース）"""
-    # キーワードキャッシュを読み込み
-    domain_keywords = _load_domain_keywords()
-    
+def _detect_domain(user_request: str) -> List[str]:
+    """ユーザー要求から適用すべき分野を検出する"""
     domains = []
+    
+    # 医療分野キーワード
+    medical_keywords = [
+        "診断", "症状", "治療", "薬物", "疾患", "病気", "医療", "患者", "医師", 
+        "処方", "副作用", "病理", "手術", "検査", "健康", "臨床"
+    ]
+    
+    # 法的分野キーワード
+    legal_keywords = [
+        "判例", "法的", "証拠", "事実認定", "契約", "裁判", "法律", "権利", 
+        "義務", "責任", "訴訟", "法廷", "弁護", "司法", "条文", "規制"
+    ]
+    
+    # エンジニアリング分野キーワード
+    engineering_keywords = [
+        "設計", "実装", "アーキテクチャ", "システム", "ソフトウェア", "ハードウェア", 
+        "プログラム", "コード", "開発", "テスト", "デバッグ", "パフォーマンス", 
+        "セキュリティ", "ネットワーク", "データベース", "API", "フレームワーク"
+    ]
+    
+    # AI・機械学習分野キーワード
+    ai_ml_keywords = [
+        "機械学習", "AI", "人工知能", "ニューラルネット", "深層学習", "ディープラーニング",
+        "モデル", "アルゴリズム", "訓練", "学習", "予測", "分類", "回帰", "クラスタリング",
+        "自然言語処理", "NLP", "コンピュータビジョン", "画像認識", "強化学習", "RL",
+        "LLM", "大規模言語モデル", "Transformer", "BERT", "GPT", "データサイエンス"
+    ]
+    
+    # クラウド・DevOps分野キーワード
+    cloud_devops_keywords = [
+        "クラウド", "AWS", "Azure", "GCP", "Docker", "Kubernetes", "コンテナ",
+        "CI/CD", "DevOps", "SRE", "インフラ", "デプロイ", "オーケストレーション",
+        "マイクロサービス", "サーバーレス", "監視", "ログ", "メトリクス", "アラート",
+        "スケーリング", "負荷分散", "CDN", "バックアップ", "災害復旧"
+    ]
+    
+    # 安全重要分野キーワード
+    safety_critical_keywords = [
+        "航空", "宇宙", "原子力", "医療機器", "自動運転", "制御システム", "生命維持", 
+        "緊急", "災害", "安全", "リスク", "危険", "事故", "障害", "フェイルセーフ",
+        "重要インフラ", "電力", "水道", "通信", "交通", "金融", "決済"
+    ]
+    
     user_request_lower = user_request.lower()
     
-    # 各分野のキーワードでマッチング
-    for domain, keywords in domain_keywords.items():
-        if any(kw.lower() in user_request_lower for kw in keywords):
-            domains.append(domain)
+    if any(kw.lower() in user_request_lower for kw in medical_keywords):
+        domains.append("medical")
+    if any(kw.lower() in user_request_lower for kw in legal_keywords):
+        domains.append("legal")
+    if any(kw.lower() in user_request_lower for kw in engineering_keywords):
+        domains.append("engineering")
+    if any(kw.lower() in user_request_lower for kw in ai_ml_keywords):
+        domains.append("ai_ml")
+    if any(kw.lower() in user_request_lower for kw in cloud_devops_keywords):
+        domains.append("cloud_devops")
+    if any(kw.lower() in user_request_lower for kw in safety_critical_keywords):
+        domains.append("safety_critical")
     
     # 最も優先度の高い分野を返す（複数検出された場合の優先順位）
-    priority_order = ["safety_critical", "medical", "legal", "financial", "ai_ml", "engineering", "cloud_devops"]
+    priority_order = ["safety_critical", "medical", "legal", "ai_ml", "engineering", "cloud_devops"]
     
     for priority_domain in priority_order:
         if priority_domain in domains:
-            logger.debug(f"分野検出: {priority_domain} (候補: {domains})")
             return priority_domain
     
-    logger.debug(f"汎用分野として処理: '{user_request[:50]}...'")
     return "general"
 
+def load_domain_constraints(user_request: str) -> str:
+    """ユーザー要求に基づいて適切な制約セットを読み込む"""
+    try:
+        # 基本制約を読み込み
+        constraints = load_constraints()
+        
+        # 分野を検出（単一の最優先分野）
+        detected_domain = _detect_domain(user_request)
+        logger.info(f"検出された分野: {detected_domain}")
+        
+        # 分野特化制約を追加
+        if detected_domain == "medical":
+            try:
+                medical_constraints = CONSTRAINTS_MEDICAL_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === 医療分野特化制約 ===\n{medical_constraints}"
+            except FileNotFoundError:
+                logger.warning("医療分野制約ファイルが見つかりません")
+                
+        elif detected_domain == "legal":
+            try:
+                legal_constraints = CONSTRAINTS_LEGAL_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === 法的分野特化制約 ===\n{legal_constraints}"
+            except FileNotFoundError:
+                logger.warning("法的分野制約ファイルが見つかりません")
+                
+        elif detected_domain == "engineering":
+            try:
+                engineering_constraints = CONSTRAINTS_ENGINEERING_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === エンジニアリング分野特化制約 ===\n{engineering_constraints}"
+            except FileNotFoundError:
+                logger.warning("エンジニアリング分野制約ファイルが見つかりません")
+                
+        elif detected_domain == "ai_ml":
+            try:
+                ai_ml_constraints = CONSTRAINTS_AI_ML_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === AI・機械学習分野特化制約 ===\n{ai_ml_constraints}"
+            except FileNotFoundError:
+                logger.warning("AI・機械学習分野制約ファイルが見つかりません")
+                
+        elif detected_domain == "cloud_devops":
+            try:
+                cloud_devops_constraints = CONSTRAINTS_CLOUD_DEVOPS_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === クラウド・DevOps分野特化制約 ===\n{cloud_devops_constraints}"
+            except FileNotFoundError:
+                logger.warning("クラウド・DevOps分野制約ファイルが見つかりません")
+                
+        elif detected_domain == "safety_critical":
+            try:
+                safety_critical_constraints = CONSTRAINTS_SAFETY_CRITICAL_FILE.read_text(encoding="utf-8")
+                constraints += f"\n\n# === 安全重要分野特化制約 ===\n{safety_critical_constraints}"
+            except FileNotFoundError:
+                logger.warning("安全重要分野制約ファイルが見つかりません")
+        
+        else:  # general
+            logger.info("分野不明のため、最も厳格な制約セットを適用")
+            # 一般的な場合は基本制約のみ使用
+            
+        return constraints
+        
+    except Exception as e:
+        logger.error(f"制約読み込みエラー: {e}")
+        return load_constraints()  # フォールバック
 def create_sandbox() -> str:
     """安全な作業環境（サンドボックス）を作成"""
     if not GIT_AVAILABLE:
@@ -375,7 +388,7 @@ CoreThink推論結果を踏まえた追加考慮点や代替案を提案して�
         except Exception as e:
             logger.warning(f"Failed to log tool execution: {e}")
     
-    # @app.tool()  # Phase3統合により廃止: unified_gsr_reasoning に統合済み
+    @app.tool()
     async def reason_about_change(
         user_intent: str,
         current_state: str,
@@ -478,17 +491,13 @@ CoreThink推論結果を踏まえた追加考慮点や代替案を提案して�
         logger.info("制約検証開始")
         
         try:
-            # 分野別制約を含む制約を読み込み
-            constraints = load_combined_constraints(proposed_change + " " + reasoning_context)
+            constraints = load_constraints()
             
-            # 制約チェックロジック（分野別制約対応版）
+            # 制約チェックロジック（簡易版・従来通り）
             core_validation = f"""
 【制約検証結果】
 提案変更: {proposed_change}
 文脈: {reasoning_context}
-
-【適用制約セット】
-{constraints[:300]}...
 
 【詳細チェック】
 ✅ MUST「公開API変更禁止」 → 適合確認中
@@ -631,7 +640,7 @@ CoreThink推論結果を踏まえた追加考慮点や代替案を提案して�
             logger.error(error_msg)
             return error_msg
 
-    # @app.tool()  # Phase3統合により廃止: unified_gsr_reasoning に統合済み
+    @app.tool()
     async def refine_understanding(
         ambiguous_request: str,
         context_clues: str = "",
@@ -768,7 +777,7 @@ CoreThink推論結果を踏まえた追加考慮点や代替案を提案して�
             logger.error(error_msg)
             return error_msg
 
-    # @app.tool()  # Phase3: 統合により無効化
+    @app.tool()
     async def detect_symbolic_patterns(
         input_data: str,
         pattern_domain: str,  # visual, logical, linguistic, code
@@ -847,7 +856,7 @@ Composite Operations: 複合操作による変換可能性
             logger.error(error_msg)
             return error_msg
 
-    # @app.tool()  # Phase3: 統合により無効化
+    @app.tool()
     async def orchestrate_multi_step_reasoning(
         task_description: str,
         available_tools: str,
@@ -908,7 +917,7 @@ Step 3: 文脈保持での最終統合 - 結果統合・品質確認
             logger.error(error_msg)
             return error_msg
 
-    # @app.tool()  # Phase3: 統合により無効化
+    @app.tool()
     async def analyze_repository_context(
         repository_path: str,
         target_issue: str,
@@ -969,7 +978,7 @@ Step 3: 文脈保持での最終統合 - 結果統合・品質確認
             logger.error(error_msg)
             return error_msg
 
-    # @app.tool()  # Phase3: 統合により無効化
+    @app.tool()
     async def learn_dynamic_constraints(
         interaction_history: str,
         constraint_violations: str,
@@ -1032,7 +1041,7 @@ NL変換ルール: 論理ルールの自然言語表現への変換
 
     # ================== Phase3 履歴管理ツール ==================
 
-    # @app.tool()  # Phase3: 統合により無効化
+    @app.tool()
     async def get_reasoning_history(
         query: str = "",
         count: int = 10
@@ -1072,7 +1081,7 @@ NL変換ルール: 論理ルールの自然言語表現への変換
             logger.error(error_msg)
             return error_msg
 
-    # @app.tool()  # Phase3: 統合により無効化
+    @app.tool()
     async def get_history_statistics() -> str:
         """履歴統計情報を取得
         
@@ -1104,7 +1113,7 @@ Sampling拡張: {'有効' if is_sampling_enabled() else '無効'}
             logger.error(error_msg)
             return error_msg
 
-    # @app.tool()  # Phase3: 統合により無効化
+    @app.tool()
     async def manage_feature_flags(
         action: str,
         feature_name: str = "",

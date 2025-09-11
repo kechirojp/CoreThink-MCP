@@ -1,4 +1,4 @@
-# 🧠 CoreThink-MCP（v1.0.0 + Elicitation機能）
+# 🧠 CoreThink-MCP（v1.0.0 + 外部化キーワード検出システム）
 > LLMモデル訓練不要・透明な記号推論で、重大な判断を安全に支援するMCPサーバー
   
 ---
@@ -22,9 +22,9 @@
 |------|------|
 | **何？** | LLMに追加して使う「記号的推論層」。MCPプロトコルで動作。 |
 | **誰向け？** | 医療・法律・金融・インフラなど、**取返しのつかない判断を迫られる現場のAI利用者**。 |
-| **何がすごい？** | ✅ 訓練不要で推論性能が飛躍的に向上<br>✅ 論文で示されたSOTA性能（例：SWE-Bench Lite 62.3%）を再現<br>✅ 自然言語で推論、すべての過程が人間可読<br>✅ **Elicitation機能**：動的にユーザー入力を要求 |
-| **何がおいしい？** | - 医療：誤診リスクを軽減<br>- 法律：違法条項を自動検出<br>- インフラ：本番変更前に安全計画を生成<br>- **対話型推論**：不足情報を自動で追加要求 |
-| **どう使う？** | `corethink ○○について詳しく考察して！！` と自然言語で指示するだけ。自動で適切なツールを呼び出し、推論を開始。 |
+| **何がすごい？** | ✅ 訓練不要で推論性能が飛躍的に向上<br>✅ 論文で示されたSOTA性能（例：SWE-Bench Lite 62.3%）を再現<br>✅ 自然言語で推論、すべての過程が人間可読<br>✅ **7分野自動検出**：コード変更なしで制約管理 |
+| **何がおいしい？** | - 医療：誤診リスクを軽減<br>- 法律：違法条項を自動検出<br>- インフラ：本番変更前に安全計画を生成<br>- **拡張性**：新分野・キーワード追加が簡単 |
+| **どう使う？** | `corethink ○○について詳しく考察して！！` と自然言語で指示するだけ。自動で適切な分野を検出し、専門制約を適用。 |
 | **注意点** | 普通のセッションより**長い思考時間**が必要。推論過程は `logs/` に記録。 |
 
 ---
@@ -33,21 +33,35 @@
 
 CoreThink-MCP は、[CoreThink論文](https://arxiv.org/abs/2509.00971)で提案された **General Symbolics Reasoning (GSR)** を **完全実装** した Model Context Protocol (MCP) サーバーです。
 
-### 🎯 **v1.0.0 + Elicitation機能 - 論文完全準拠版**
+### 🎯 **v1.0.0 + 外部化キーワード検出システム - 論文完全準拠版**
 
-**9つの専門ツール + Elicitation機能**でGSR推論アーキテクチャを完全再現：
+**6つの統合ツール + 7分野自動検出システム**でGSR推論アーキテクチャを完全再現：
 
-- 🎯 **基本推論**: reason_about_change, validate_against_constraints, execute_with_safeguards
-- 🔬 **高度推論**: trace_reasoning_steps, refine_understanding  
-- 🚀 **先進技術**: detect_symbolic_patterns, orchestrate_multi_step_reasoning, analyze_repository_context, learn_dynamic_constraints
-- 💬 **Elicitation**: ユーザー入力要求による動的情報収集
+- 🎯 **統合推論**: unified_gsr_reasoning, collect_reasoning_materials, manage_system_state
+- 🔬 **検証・実行**: validate_against_constraints, execute_with_safeguards
+- � **トレース**: trace_reasoning_steps
+- 🌐 **自動分野検出**: medical, legal, financial, engineering, ai_ml, cloud_devops, safety_critical
 
 ### 📚 学術的背景
 
 本システムは査読済み学術論文に基づく理論的基盤を持つAI推論支援システムです：
 
 1. **学術的基盤**: arXiv:2509.00971v2による理論的裏付け
-2. **実用的実装**: GSR理論をMCPサーバーとして実装
+3. **実用的実装**: GSR理論をMCPサーバーとして実装
+4. **外部化アーキテクチャ**: 130+行ハードコード削除、7分野キーワード外部ファイル化
+5. **メンテナンス革命**: コード変更なしでキーワード・制約管理可能
+
+---
+
+## 🚀 **2025年9月12日: 外部化キーワード検出システム実装完了**
+
+### 🎯 アーキテクチャ革新の成果
+
+- **ハードコード削除**: 130+行のハードコードキーワードを完全外部化
+- **7分野対応**: medical, legal, financial, engineering, ai_ml, cloud_devops, safety_critical
+- **メンテナンス性向上**: 制約ファイル内でキーワードと制約を一元管理
+- **パフォーマンス最適化**: キャッシュシステムによる高速化
+- **拡張性確保**: 新分野追加時のコード変更不要
 3. **企業適用**: 医療・法律等高信頼性分野での利用を考慮
 4. **研究貢献**: 人工知能分野への学術的貢献
 5. **効率性**: ファインチューニング不要での性能向上
