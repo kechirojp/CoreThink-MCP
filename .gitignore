@@ -92,4 +92,3 @@ config/local/
 
 # Long Memory MCP documents
 Long_Memory_MCP_doc/
-*.md
