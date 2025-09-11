@@ -31,6 +31,8 @@ CoreThink-MCPは、Cornell大学の学術論文（[arXiv:2509.00971v2](https://a
 - **LiveCodeBench**[^4]: 66.6%（+59.7%向上）- ライブコーディング問題の解決率
 - **ARC-AGI-2**[^5]: 24.4%（+57.4%向上）- 汎用人工知能の推論能力測定
 
+![Benchmark Results](benchmark.png)
+
 [^1]:**GSR (General Symbolics Reasoning)**：自然言語を使った記号的推論手法。従来の数値的学習ではなく、言語による論理構造で問題を解決。
 
 

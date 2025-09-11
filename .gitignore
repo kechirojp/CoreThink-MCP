@@ -92,3 +92,47 @@ config/local/
 
 # Long Memory MCP documents
 Long_Memory_MCP_doc/
+
+
+# Ignore specific files
+README_poe_sample.md
+README_old.md
+README_backup.md
+Phase2_修正完了_ミドルウェア削除レポート.md
+Phase1_完了レポート.md
+IMPLEMENTATION_PLAN.md
+REQUIREMENTS.md
+TASKS.md
+ツールの動作確認用問答集.md
+改善提案_Elicitation_ミドルウェア.md
+本日の作業まとめ_2025年09月10日.md
+明日の作業予定_2025年9月13日.md
+021_md
+20250909_全ログ.md
+20250910_午前全セッションログ.md
+20250910_全ログ.md
+20250911_セッション全ログ.md
+CoreThink_MCP_統合GSR推論エンジン_詳細設計書_重要書類.md
+CoreThink-MCP プロジェクト深度分析_2025年09月11日.md
+CoreThink－MCP実際の出力.md
+CoreThink論文_決定的コード比較解説_最重要書類.md
+example2.md
+docs\Phase3_軽量拡張実行計画.md
+docs\Phase3_修正版_品質重視Sampling統合計画.md
+docs\Phase3最終実行計画書_CoreThink論文準拠版.md
+docs\Phase3実装分析_現在vs修正版.md
+docs\Phase3修正版実装計画_品質重視.md
+docs\seamless_elicitation_guide.md
+docs\elicitation_implementation.md
+docs\fastmcp_analysis_report.md
+test_corethink_revert.py
+test_domain_constraints.py
+test_domain_detection.py
+test_e2e_middleware.py
+test_elicitation.py
+test_mcp_client.py
+test_middleware_integration.py
+test_phase1_elicitation.py
+test_phase3_features.py
+test_refine_understanding.py
+test_tools.py
