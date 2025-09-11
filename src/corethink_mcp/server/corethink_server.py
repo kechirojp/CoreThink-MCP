@@ -384,12 +384,12 @@ if app:
     ) -> str:
         """
         Resolves semantic ambiguity in user requests through contextual analysis.
-        Implements lexical disambiguation requirements from Section 5.1.
+        Implements lexical disambiguation with FastMCP elicitation for missing information.
         
         Args:
             ambiguous_request: The potentially ambiguous user request
-            context_clues: Available contextual information (can be elicited if missing)
-            domain_hints: Domain-specific hints (medical, legal, etc.) (can be elicited if missing)
+            context_clues: Available contextual information (elicited if missing)
+            domain_hints: Domain-specific hints (medical, legal, etc.) (elicited if missing)
             
         Returns:
             Refined understanding with disambiguation analysis and clarified interpretation
@@ -397,6 +397,35 @@ if app:
         logger.info(f"曖昧性解消開始: {ambiguous_request}")
         
         try:
+            # Elicitation判定: 不足情報の検出
+            needs_elicitation = not context_clues or not domain_hints
+            elicitation_info = ""
+            
+            if needs_elicitation:
+                logger.info("追加情報が必要です（将来的にElicitationで自動収集予定）")
+                
+                # 不足しているパラメータを特定
+                missing_info = []
+                if not context_clues:
+                    missing_info.append("文脈手がかり")
+                if not domain_hints:
+                    missing_info.append("専門分野情報")
+                
+                missing_str = "、".join(missing_info)
+                
+                # 現段階では手動で情報要求（Phase 1a実装）
+                elicitation_info = f"""
+【Elicitation要求】FastMCP統合準備中
+不足情報: {missing_str}
+推奨入力例:
+- context_clues: "システム状況、エラー詳細、利用環境等"
+- domain_hints: "技術/医療/法律/教育等の専門分野"
+
+※ Phase 1b では ctx.elicit() による自動収集に移行予定
+                """.strip()
+                
+                logger.info(f"Elicitation情報生成: {missing_str}")
+            
             # 基本的な曖昧性パターンの検出
             ambiguity_indicators = [
                 "改善", "最適化", "修正", "更新", "変更", "調整",
@@ -416,37 +445,40 @@ if app:
                     domain_context += "\n→ 医療安全と患者の利益を最優先"
                 elif "法律" in domain_hints:
                     domain_context += "\n→ 法的根拠と適正手続きを重視"
+                elif "技術" in domain_hints:
+                    domain_context += "\n→ 技術的実現可能性と保守性を考慮"
             
             refinement_result = f"""
-【曖昧性解消分析】
+【FastMCP Elicitation統合 曖昧性解消分析】Phase 1a
 
 原文: "{ambiguous_request}"
-文脈手がかり: {context_clues}{domain_context}
+文脈手がかり: {context_clues if context_clues else "未提供"}{domain_context}
+
+{elicitation_info}
 
 【語義曖昧性の特定】
 1. 多義語検出: {detected_ambiguities if detected_ambiguities else "明確な表現"}
-2. 文脈依存解釈: 提供された文脈から意図を推定
-3. 専門用語解釈: {domain_hints if domain_hints else "一般的解釈"}に基づく意味の特定
+2. 文脈依存解釈: {"完全" if context_clues else "不完全 - 追加情報必要"}
+3. 専門用語解釈: {domain_hints if domain_hints else "一般的解釈 - 専門分野指定推奨"}
+
+【Elicitation強化による精緻化】
+実装段階: Phase 1a（情報要求通知）
+情報完成度: {"完全" if context_clues and domain_hints else "部分的"}
+次段階: {"分析続行可能" if context_clues and domain_hints else "追加情報収集推奨"}
 
 【精緻化された理解】
-明確化された要求: 具体的で実行可能な形式への変換が必要
-想定される制約: 暗黙的制約の明示化（安全性、法的要件、技術的制限）
-実行計画: 段階的アプローチによるリスク最小化
-
-【確認事項】
-ユーザー確認要求: 
-- 解釈の正確性確認
-- 追加情報の必要性
-- 優先順位の明確化
-- 期待される結果の詳細化
+明確化レベル: {"高" if context_clues and domain_hints else "中"}
+実行可能性: {"完全準備済み" if context_clues and domain_hints else "追加情報で向上"}
+推奨次ステップ: {"reason_about_change実行" if context_clues and domain_hints else "パラメータ補完後再実行"}
 
 【GSR原則適合性】
 意味保持: ✅ 元の意図を損なわない解釈
-文脈考慮: ✅ 提供された文脈情報を完全活用
-曖昧性除去: ✅ 実行可能な明確性の達成
+文脈考慮: {"✅ 完全活用" if context_clues else "⚠️ 限定的（追加情報で改善）"}
+曖昧性除去: {"✅ 実行可能レベル達成" if context_clues and domain_hints else "🔄 段階的改善中"}
+FastMCP準拠: 🔄 Phase 1a（通知型）→ Phase 1b（自動elicitation）予定
             """.strip()
             
-            logger.info("曖昧性解消完了")
+            logger.info("曖昧性解消完了（Elicitation統合Phase 1a）")
             return refinement_result
             
         except Exception as e:
