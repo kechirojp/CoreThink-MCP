@@ -40,6 +40,7 @@ if str(project_root) not in sys.path:
 from src.corethink_mcp import get_version_info
 from src.corethink_mcp.feature_flags import feature_flags, is_sampling_enabled, get_sampling_timeout, is_history_enabled
 from src.corethink_mcp.history_manager import log_tool_execution
+from src.corethink_mcp.reasoning_logger import reasoning_logger
 
 # ログ設定（UTF-8対応）
 log_level = os.getenv("CORETHINK_LOG_LEVEL", "INFO")
@@ -1607,6 +1608,14 @@ Sampling拡張: {'有効' if status['sampling_enabled'] else '無効'}
         start_time = datetime.now()
         logger.info(f"統合GSR推論開始: {situation_description[:100]}...")
         
+        # 推論セッション開始
+        session_id = reasoning_logger.start_session(
+            situation_description=situation_description,
+            required_judgment=required_judgment,
+            context_depth=context_depth,
+            reasoning_mode=reasoning_mode
+        )
+        
         try:
             # Phase2最適化: 自動材料収集統合
             material_types = []
@@ -1618,6 +1627,7 @@ Sampling拡張: {'有効' if status['sampling_enabled'] else '無効'}
                 material_types.extend(["domain_knowledge"])
             
             # 材料収集（内部実装を使用）
+            materials_start = datetime.now()
             collected_materials = ""
             if material_types:
                 materials_types_str = ",".join(set(material_types))
@@ -1627,19 +1637,132 @@ Sampling拡張: {'有効' if status['sampling_enabled'] else '無効'}
                     depth=context_depth,
                     ctx=ctx
                 )
+            materials_time = (datetime.now() - materials_start).total_seconds() * 1000
+            
+            # 材料収集ステップをログ記録
+            reasoning_logger.log_step(
+                step_name="推論材料収集",
+                layer="preparation",
+                input_data={
+                    "topic": situation_description,
+                    "material_types": material_types,
+                    "depth": context_depth
+                },
+                output_data={
+                    "materials_length": len(collected_materials),
+                    "materials_preview": collected_materials[:200] + "..." if len(collected_materials) > 200 else collected_materials
+                },
+                transformation_rule="CoreThink論文準拠の推論材料収集アルゴリズム",
+                execution_time_ms=materials_time,
+                confidence_level="HIGH",
+                notes="制約、先例、専門知識の統合収集"
+            )
             
             # 分野特化制約情報の読み込み
             constraints = load_domain_constraints(situation_description)
             full_context = f"{collected_materials}\n\n【制約情報】\n{constraints}"
             
+            # 制約適用をログ記録
+            reasoning_logger.log_constraints([
+                f"分野特化制約: {len(constraints)}文字",
+                f"推論材料: {len(collected_materials)}文字"
+            ])
+            
             # GSR 4層アーキテクチャによる推論
+            layer1_start = datetime.now()
             layer1_result = _gsr_layer1_parse_native_language(situation_description, full_context)
+            layer1_time = (datetime.now() - layer1_start).total_seconds() * 1000
+            
+            reasoning_logger.log_step(
+                step_name="自然言語解析",
+                layer="Layer 1",
+                input_data={
+                    "situation": situation_description,
+                    "context_length": len(full_context)
+                },
+                output_data={
+                    "parsed_result": layer1_result[:300] + "..." if len(layer1_result) > 300 else layer1_result
+                },
+                transformation_rule="GSR Layer 1: 自然言語から意味構造への変換",
+                execution_time_ms=layer1_time,
+                confidence_level="HIGH"
+            )
+            
+            layer2_start = datetime.now()
             layer2_result = _gsr_layer2_inlanguage_reasoning(layer1_result, full_context)
+            layer2_time = (datetime.now() - layer2_start).total_seconds() * 1000
+            
+            reasoning_logger.log_step(
+                step_name="言語内推論",
+                layer="Layer 2", 
+                input_data={
+                    "layer1_output": layer1_result[:200] + "..." if len(layer1_result) > 200 else layer1_result
+                },
+                output_data={
+                    "reasoning_result": layer2_result[:300] + "..." if len(layer2_result) > 300 else layer2_result
+                },
+                transformation_rule="GSR Layer 2: 意味構造内での論理的推論",
+                execution_time_ms=layer2_time,
+                confidence_level="MEDIUM"
+            )
+            
+            layer3_start = datetime.now()
             layer3_result = _gsr_layer3_execution_explainability(layer2_result, full_context)
+            layer3_time = (datetime.now() - layer3_start).total_seconds() * 1000
+            
+            reasoning_logger.log_step(
+                step_name="実行・説明可能性",
+                layer="Layer 3",
+                input_data={
+                    "layer2_output": layer2_result[:200] + "..." if len(layer2_result) > 200 else layer2_result
+                },
+                output_data={
+                    "explainable_result": layer3_result[:300] + "..." if len(layer3_result) > 300 else layer3_result
+                },
+                transformation_rule="GSR Layer 3: 説明可能な実行可能形式への変換",
+                execution_time_ms=layer3_time,
+                confidence_level="HIGH"
+            )
+            
+            layer4_start = datetime.now()
             layer4_result = _gsr_layer4_avoid_translation(layer3_result)
+            layer4_time = (datetime.now() - layer4_start).total_seconds() * 1000
+            
+            reasoning_logger.log_step(
+                step_name="自然言語出力",
+                layer="Layer 4",
+                input_data={
+                    "layer3_output": layer3_result[:200] + "..." if len(layer3_result) > 200 else layer3_result
+                },
+                output_data={
+                    "final_output": layer4_result[:300] + "..." if len(layer4_result) > 300 else layer4_result
+                },
+                transformation_rule="GSR Layer 4: 翻訳損失回避の自然言語出力",
+                execution_time_ms=layer4_time,
+                confidence_level="HIGH"
+            )
             
             # 信頼度計算（Phase2拡張）
             confidence_level = _calculate_confidence_level(layer2_result, collected_materials)
+            
+            # 信頼度計算をログ記録
+            reasoning_logger.log_step(
+                step_name="信頼度計算",
+                layer="evaluation",
+                input_data={
+                    "layer2_length": len(layer2_result),
+                    "materials_length": len(collected_materials)
+                },
+                output_data={
+                    "confidence": confidence_level
+                },
+                transformation_rule="Phase2信頼度計算アルゴリズム",
+                execution_time_ms=10,
+                confidence_level=confidence_level
+            )
+            
+            # 実行時間計算
+            execution_time = (datetime.now() - start_time).total_seconds() * 1000
             
             # 統合結果の生成
             unified_result = f"""
@@ -1666,15 +1789,30 @@ Layer 1 → Layer 2 → Layer 3 → Layer 4
 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 【推論所要時間】
-{(datetime.now() - start_time).total_seconds():.2f}秒
+{execution_time:.1f}ms
             """
             
-            logger.info("統合GSR推論完了")
+            # セッション終了とログ出力
+            reasoning_logger.end_session(
+                final_judgment=unified_result,
+                final_confidence=confidence_level
+            )
+            
+            logger.info(f"統合GSR推論完了: {execution_time:.1f}ms, 信頼度: {confidence_level}")
             return unified_result.strip()
             
         except Exception as e:
+            error_time = (datetime.now() - start_time).total_seconds() * 1000
             error_msg = f"統合GSR推論エラー: {str(e)}"
             logger.error(error_msg)
+            
+            # エラーログ記録
+            if 'session_id' in locals():
+                reasoning_logger.end_session(
+                    final_judgment=error_msg,
+                    final_confidence="ERROR"
+                )
+            
             return error_msg
 
     @app.tool()

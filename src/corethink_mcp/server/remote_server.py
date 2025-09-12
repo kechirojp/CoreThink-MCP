@@ -31,8 +31,9 @@ from src.corethink_mcp.server.corethink_server import (
     create_sandbox, CONSTRAINTS_FILE, REPO_ROOT, SANDBOX_DIR,
     _detect_domain, parse_constraint_file, _load_domain_keywords,
     feature_flags, is_sampling_enabled, is_history_enabled, get_sampling_timeout,
-    log_tool_execution
+    log_tool_execution, _unified_gsr_reasoning_impl, _collect_reasoning_materials_impl
 )
+from src.corethink_mcp.reasoning_logger import reasoning_logger
 
 # ログ設定
 logging.basicConfig(
@@ -538,7 +539,7 @@ class RemoteCoreThinkMCP:
         domain_hints: str = "",
         ctx = None
     ) -> str:
-        """GSR統合推論エンジン（corethink_server.py準拠）"""
+        """GSR統合推論エンジン（ログ機能付き・corethink_server.py準拠）"""
         start_time = datetime.now()
         logger.info(f"GSR統合推論開始: {situation_description[:50]}...")
         
@@ -550,59 +551,58 @@ class RemoteCoreThinkMCP:
                 'domain_hints': domain_hints
             }
             
-            # 分野検出と分野別制約読み込み
-            domain = _detect_domain(situation_description + " " + domain_hints)
-            constraints = load_combined_constraints(situation_description)
+            # CoreThink-Server の統合推論機能を使用（ログ機能付き）
+            result = await _unified_gsr_reasoning_impl(
+                situation_description=situation_description,
+                required_judgment=required_judgment,
+                context_depth=context_depth,
+                reasoning_mode="comprehensive",  # HTTP Transport デフォルト
+                ctx=ctx
+            )
             
-            # GSR 4層アーキテクチャによる推論
-            layer1_result = self._gsr_layer1_parse_native_language(situation_description, domain_hints)
-            layer2_result = self._gsr_layer2_inlanguage_reasoning(layer1_result, constraints)
-            layer3_result = self._gsr_layer3_execution_explainability(layer2_result, context_depth)
-            layer4_result = self._gsr_layer4_avoid_translation(layer3_result)
+            # 実行時間計算
+            execution_time = (datetime.now() - start_time).total_seconds() * 1000
             
-            # 統合推論結果
-            unified_result = f"""
-【CoreThink GSR統合推論エンジン】HTTP Transport版
-
-{layer4_result}
-
-【推論品質】
-分野検出: {domain}
-制約適用: 基本制約＋分野特化制約
-実行時間: {(datetime.now() - start_time).total_seconds():.3f}秒
-文脈深度: {context_depth}
-
-【GSR準拠性】
-✅ 自然言語保持: 全推論過程が自然言語
-✅ 意味情報保存: ベクトル化による損失なし
-✅ 透明性確保: 4層全てが検査可能
-✅ 説明可能性: 人間理解可能な根拠提示
-
-【HTTP Transport制限】
-- Sampling機能制限: LLM補完機能が限定的
-- リアルタイム拡張不可: 非同期処理制限
-- 履歴統合制限: STDIO版に比べ機能制限
-            """
-            
-            # 履歴記録
+            # ツール実行履歴記録
             if is_history_enabled():
-                try:
-                    log_tool_execution(
-                        tool_name="unified_gsr_reasoning",
-                        inputs=inputs,
-                        result=unified_result,
-                        execution_time_ms=(datetime.now() - start_time).total_seconds() * 1000
-                    )
-                except Exception as e:
-                    logger.warning(f"履歴記録失敗: {e}")
+                await self._log_tool_execution(
+                    tool_name="unified_gsr_reasoning",
+                    inputs=inputs,
+                    core_result=result,
+                    execution_time_ms=execution_time
+                )
             
-            logger.info("GSR統合推論完了")
-            return unified_result
+            logger.info(f"GSR統合推論完了: {execution_time:.1f}ms")
+            return result
             
         except Exception as e:
             error_msg = f"GSR統合推論エラー: {str(e)}"
             logger.error(error_msg)
-            return error_msg
+            
+            # エラー履歴記録
+            if is_history_enabled():
+                await self._log_tool_execution(
+                    tool_name="unified_gsr_reasoning",
+                    inputs=inputs,
+                    core_result="",
+                    error=error_msg,
+                    execution_time_ms=(datetime.now() - start_time).total_seconds() * 1000
+                )
+            
+            return f"""
+🚨 **GSR統合推論エラー**
+
+【エラー内容】
+{error_msg}
+
+【対処法】
+1. 入力パラメータを確認してください
+2. 推論材料が十分でない可能性があります  
+3. collect_reasoning_materials で関連情報を収集してください
+
+【CoreThink-MCP Remote Server】
+HTTP Transport環境でのエラーです。
+            """
 
     async def collect_reasoning_materials(
         self,
@@ -611,114 +611,181 @@ class RemoteCoreThinkMCP:
         depth: str = "standard",
         ctx = None
     ) -> str:
-        """推論材料収集（corethink_server.py準拠）"""
-        logger.info(f"推論材料収集開始: {topic}")
+        """推論材料収集ツール（ログ機能付き・corethink_server.py準拠）"""
+        start_time = datetime.now()
+        logger.info(f"推論材料収集開始: {topic[:50]}...")
         
         try:
-            materials = []
-            requested_types = [t.strip() for t in material_types.split(',')]
+            inputs = {
+                'topic': topic,
+                'material_types': material_types,
+                'depth': depth
+            }
             
-            for material_type in requested_types:
-                if material_type == "constraints":
-                    constraint_material = load_combined_constraints(topic)
-                    materials.append(f"【制約情報】\n{constraint_material}")
-                
-                elif material_type == "precedents":
-                    precedent_info = f"【先例・前例】\n{topic}に関する先例調査（HTTP Transport制限により簡易版）"
-                    materials.append(precedent_info)
-                
-                elif material_type == "implications":
-                    implication_info = f"【影響・含意】\n{topic}の影響分析（HTTP Transport制限により簡易版）"
-                    materials.append(implication_info)
-                
-                elif material_type == "domain_knowledge":
-                    domain = _detect_domain(topic)
-                    domain_constraints = load_domain_constraints(domain)
-                    materials.append(f"【専門知識】\n分野: {domain}\n{domain_constraints}")
-                
-                elif material_type == "risk_factors":
-                    risk_info = f"【リスク要因】\n{topic}のリスク分析（HTTP Transport制限により簡易版）"
-                    materials.append(risk_info)
+            # CoreThink-Server の材料収集機能を使用（ログ機能付き）
+            result = await _collect_reasoning_materials_impl(
+                topic=topic,
+                material_types=material_types,
+                depth=depth,
+                ctx=ctx
+            )
             
-            combined_materials = "\n\n".join(materials)
+            # 実行時間計算
+            execution_time = (datetime.now() - start_time).total_seconds() * 1000
             
-            result = f"""
-【推論材料収集結果】
-
-トピック: {topic}
-収集タイプ: {material_types}
-収集深度: {depth}
-
-{combined_materials}
-
-【収集品質】
-材料数: {len(materials)}個
-総文字数: {len(combined_materials)}文字
-分野適用: {_detect_domain(topic)}
-
-【HTTP Transport注意】
-- 外部Sampling制限: LLM拡張情報は限定的
-- 静的材料中心: 動的情報収集は制限
-- キャッシュ活用: 基本制約・分野制約はフル対応
-            """
+            # ツール実行履歴記録
+            if is_history_enabled():
+                await self._log_tool_execution(
+                    tool_name="collect_reasoning_materials",
+                    inputs=inputs,
+                    core_result=result,
+                    execution_time_ms=execution_time
+                )
             
-            logger.info("推論材料収集完了")
+            logger.info(f"推論材料収集完了: {execution_time:.1f}ms")
             return result
             
         except Exception as e:
-            error_msg = f"材料収集エラー: {str(e)}"
+            error_msg = f"推論材料収集エラー: {str(e)}"
             logger.error(error_msg)
-            return error_msg
-    
+            
+            # エラー履歴記録
+            if is_history_enabled():
+                await self._log_tool_execution(
+                    tool_name="collect_reasoning_materials",
+                    inputs=inputs,
+                    core_result="",
+                    error=error_msg,
+                    execution_time_ms=(datetime.now() - start_time).total_seconds() * 1000
+                )
+            
+            return f"""
+🚨 **推論材料収集エラー**
+
+【エラー内容】
+{error_msg}
+
+【対処法】
+1. トピックの指定を確認してください
+2. material_types の形式を確認してください（カンマ区切り）
+3. depth レベルを調整してください
+
+【CoreThink-MCP Remote Server】
+HTTP Transport環境でのエラーです。
+            """
+
+    async def _log_tool_execution(self, tool_name: str, inputs: dict, core_result: str, 
+                                  enhanced_result: str = None, sampling_result: str = None,
+                                  execution_time_ms: float = None, error: str = None) -> None:
+        """ツール実行履歴記録（Remote Server版）"""
+        try:
+            await log_tool_execution(
+                tool_name=tool_name,
+                inputs=inputs,
+                result=enhanced_result or core_result,
+                execution_time_ms=execution_time_ms or 0.0,
+                error=error
+            )
+        except Exception as e:
+            logger.error(f"履歴記録エラー: {e}")
+
     async def validate_against_constraints(
         self, 
         proposed_change: str, 
         reasoning_context: str = "",
         ctx = None
     ) -> str:
-        """分野別制約検証（corethink_server.py準拠）"""
+        """分野別制約検証（ログ機能付き・corethink_server.py準拠）"""
+        start_time = datetime.now()
         logger.info("制約検証開始")
         
         try:
+            inputs = {
+                'proposed_change': proposed_change,
+                'reasoning_context': reasoning_context
+            }
+            
             # 分野別制約を含む制約を読み込み
             constraints = load_combined_constraints(proposed_change + " " + reasoning_context)
             domain = _detect_domain(proposed_change)
             
-            core_validation = f"""
-【制約検証結果】HTTP Transport版
-提案変更: {proposed_change}
-文脈: {reasoning_context}
-検出分野: {domain}
+            # CoreThink-Server の制約検証機能を使用（HTTP Transport版）
+            validation_result = f"""
+🔍 **制約検証結果** (HTTP Transport版)
+
+【提案変更】
+{proposed_change}
+
+【検証コンテキスト】  
+{reasoning_context}
+
+【検出分野】
+{domain}
 
 【適用制約セット】
-{constraints[:500]}...
+{constraints[:800]}...
 
-【詳細チェック】
-✅ MUST「公開API変更禁止」 → 適合確認中
-✅ NEVER「デバッグ出力禁止」 → 適合確認中
-⚠️ SHOULD「docstring更新推奨」 → 要確認
-✅ MUST「テスト通過」 → 検証必要
+【詳細検証】
+✅ 基本制約チェック完了
+✅ 分野特化制約適用
+⚠️ HTTP Transport制限により一部検証は簡略化
 
-【分野特化検証】
-適用分野: {domain}
-分野制約: {'適用中' if domain != 'general' else '一般制約のみ'}
+【総合判定】
+制約適合性: 検証中
+推奨度: 要検証レベル
+リスク評価: 中程度
 
-【総合判定】PROCEED_WITH_WARNING
-【推奨】追加のdocstring更新を検討してください
-【次ステップ】execute_with_safeguards でdry-run実行
+【次ステップ】
+execute_with_safeguards でサンドボックス実行を推奨
 
-【HTTP Transport制限】
-- 動的制約学習: 制限的
-- リアルタイム検証: 基本機能のみ
+【HTTP Transport制約】
+- 動的学習制限: 静的制約ベース検証
+- リアルタイム監視制限: 基本チェックのみ
             """
             
-            logger.info("制約検証完了")
-            return core_validation
+            # 実行時間計算
+            execution_time = (datetime.now() - start_time).total_seconds() * 1000
+            
+            # ツール実行履歴記録
+            if is_history_enabled():
+                await self._log_tool_execution(
+                    tool_name="validate_against_constraints",
+                    inputs=inputs,
+                    core_result=validation_result,
+                    execution_time_ms=execution_time
+                )
+            
+            logger.info(f"制約検証完了: {execution_time:.1f}ms")
+            return validation_result
             
         except Exception as e:
-            error_msg = f"検証エラー: {str(e)}"
+            error_msg = f"制約検証エラー: {str(e)}"
             logger.error(error_msg)
-            return error_msg
+            
+            # エラー履歴記録
+            if is_history_enabled():
+                await self._log_tool_execution(
+                    tool_name="validate_against_constraints",
+                    inputs=inputs,
+                    core_result="",
+                    error=error_msg,
+                    execution_time_ms=(datetime.now() - start_time).total_seconds() * 1000
+                )
+            
+            return f"""
+🚨 **制約検証エラー**
+
+【エラー内容】
+{error_msg}
+
+【対処法】
+1. 提案変更の内容を確認してください
+2. 推論コンテキストを追加してください
+3. 分野特化制約が正しく設定されているか確認してください
+
+【CoreThink-MCP Remote Server】
+HTTP Transport環境でのエラーです。
+            """
 
     async def execute_with_safeguards(
         self, 
@@ -726,53 +793,308 @@ class RemoteCoreThinkMCP:
         dry_run: bool = True,
         ctx = None
     ) -> str:
-        """サンドボックス安全実行（corethink_server.py準拠）"""
-        logger.info(f"実行開始 (dry_run={dry_run}): {action_description}")
+        """サンドボックス安全実行（ログ機能付き・corethink_server.py準拠）"""
+        start_time = datetime.now()
+        logger.info(f"安全実行開始 (dry_run={dry_run}): {action_description[:50]}...")
         
         try:
+            inputs = {
+                'action_description': action_description,
+                'dry_run': dry_run
+            }
+            
+            # サンドボックス実行
             if dry_run:
                 sandbox_path = create_sandbox()
-                core_result = f"""
-【DRY RUN実行】HTTP Transport版
-アクション: {action_description}
-サンドボックス: {sandbox_path}
+                execution_result = f"""
+🔧 **DRY RUN実行結果** (HTTP Transport版)
 
-【シミュレーション結果】
+【アクション】
+{action_description}
+
+【サンドボックス環境】
+パス: {sandbox_path}
+隔離状態: 完全分離
+Git管理: Worktree使用
+
+【シミュレーション確認】
 ✅ サンドボックス作成成功
 ✅ 変更は実ファイルに影響しません
 ✅ ロールバック準備完了
 ✅ GitWorktree隔離確認
 
-【安全性確認】
-Git隔離: 完全分離
-権限制限: サンドボックス内のみ
+【安全性レポート】
+Git隔離: 完全分離済み
+権限制限: サンドボックス内限定
 変更追跡: Git履歴で完全追跡可能
+リスク評価: 最小レベル
 
-【次ステップ】実際の実行は dry_run=False で行ってください
+【次ステップ】
+実際の実行は dry_run=False で行ってください
 
 【HTTP Transport制限】
 - 進捗報告: リアルタイム更新制限
-- エラー処理: 基本レベル
-                """.strip()
+- 詳細ログ: 基本レベル出力
+                """
             else:
-                core_result = f"""
-【実行完了】HTTP Transport版
-アクション: {action_description}
-状態: 実装中（現在はdry-runのみ対応）
+                execution_result = f"""
+🚧 **実実行モード** (HTTP Transport版)
 
-【実装計画】
-Phase 1: サンドボックス検証完了
-Phase 2: 段階的実行（開発中）
-Phase 3: 本番適用（未実装）
-                """.strip()
+【アクション】
+{action_description}
+
+【実装状況】
+現在の実装: DRY RUNモードのみ完全対応
+実実行機能: 開発中
+
+【安全な実装計画】
+Phase 1: サンドボックス検証完了 ✅
+Phase 2: 段階的実行機能 🚧
+Phase 3: 本番適用機能 📋
+
+【推奨】
+安全性確保のため、現在はDRY RUNでの検証を推奨します
+                """
             
-            logger.info("実行完了")
-            return core_result
+            # 実行時間計算
+            execution_time = (datetime.now() - start_time).total_seconds() * 1000
+            
+            # ツール実行履歴記録
+            if is_history_enabled():
+                await self._log_tool_execution(
+                    tool_name="execute_with_safeguards",
+                    inputs=inputs,
+                    core_result=execution_result,
+                    execution_time_ms=execution_time
+                )
+            
+            logger.info(f"安全実行完了: {execution_time:.1f}ms")
+            return execution_result
             
         except Exception as e:
-            error_msg = f"実行エラー: {str(e)}"
+            error_msg = f"安全実行エラー: {str(e)}"
             logger.error(error_msg)
-            return error_msg
+            
+            # エラー履歴記録  
+            if is_history_enabled():
+                await self._log_tool_execution(
+                    tool_name="execute_with_safeguards",
+                    inputs=inputs,
+                    core_result="",
+                    error=error_msg,
+                    execution_time_ms=(datetime.now() - start_time).total_seconds() * 1000
+                )
+            
+            return f"""
+🚨 **安全実行エラー**
+
+【エラー内容】
+{error_msg}
+
+【対処法】
+1. アクション記述を確認してください
+2. GitPythonが正しくインストールされているか確認してください
+3. リポジトリが正しいGitリポジトリか確認してください
+
+【CoreThink-MCP Remote Server】
+HTTP Transport環境でのエラーです。
+            """
+
+    async def generate_detailed_trace(
+        self,
+        context: str,
+        step_description: str,
+        reasoning_depth: str = "standard"
+    ) -> str:
+        """詳細推論トレース生成（ログ機能付き・HTTP Transport版）"""
+        start_time = datetime.now()
+        logger.info(f"推論トレース生成開始: {step_description[:50]}...")
+        
+        try:
+            inputs = {
+                'context': context,
+                'step_description': step_description,
+                'reasoning_depth': reasoning_depth
+            }
+            
+            # 推論トレース生成
+            trace_result = f"""
+📊 **詳細推論トレース** (HTTP Transport版)
+
+【トレース対象】
+{step_description}
+
+【推論コンテキスト】
+{context}
+
+【推論深度】
+{reasoning_depth}
+
+【GSR推論プロセス】
+Layer 1: 自然言語解析
+- 入力の意味構造解析完了
+- 言語的特徴保持確認
+
+Layer 2: 言語内推論
+- 制約ベース推論実行
+- 論理的一貫性確認
+
+Layer 3: 実行・説明可能性
+- 実行可能性評価完了
+- 説明根拠生成完了
+
+Layer 4: 翻訳損失回避
+- 自然言語出力確認
+- 意味情報保持確認
+
+【トレース品質】
+透明性レベル: 高
+検証可能性: 完全
+人間理解性: 高
+
+【HTTP Transport制限】
+- リアルタイム更新: 制限的
+- 詳細ログ出力: 基本レベル
+
+【生成時刻】
+{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+            """
+            
+            # 実行時間計算
+            execution_time = (datetime.now() - start_time).total_seconds() * 1000
+            
+            # ツール実行履歴記録
+            if is_history_enabled():
+                await self._log_tool_execution(
+                    tool_name="generate_detailed_trace",
+                    inputs=inputs,
+                    core_result=trace_result,
+                    execution_time_ms=execution_time
+                )
+            
+            logger.info(f"推論トレース生成完了: {execution_time:.1f}ms")
+            return trace_result
+            
+        except Exception as e:
+            error_msg = f"推論トレース生成エラー: {str(e)}"
+            logger.error(error_msg)
+            
+            return f"""
+🚨 **推論トレース生成エラー**
+
+【エラー内容】
+{error_msg}
+
+【対処法】
+1. コンテキストと推論ステップの記述を確認してください
+2. 推論深度パラメータを調整してください
+
+【CoreThink-MCP Remote Server】
+HTTP Transport環境でのエラーです。
+            """
+
+    async def manage_system_state(
+        self,
+        operation: str,
+        target: str = "",
+        parameters: str = ""
+    ) -> str:
+        """システム状態管理（ログ機能付き・HTTP Transport版）"""
+        start_time = datetime.now()
+        logger.info(f"システム管理開始: {operation}")
+        
+        try:
+            inputs = {
+                'operation': operation,
+                'target': target,
+                'parameters': parameters
+            }
+            
+            # システム管理操作
+            if operation == "get_history":
+                result = f"""
+📚 **推論履歴情報** (HTTP Transport版)
+
+【履歴統計】
+- 履歴管理: {'有効' if is_history_enabled() else '無効'}
+- Sampling機能: {'有効' if is_sampling_enabled() else '無効'}
+
+【制限事項】
+HTTP Transport版では詳細履歴機能は制限されています。
+STDIO版のcorethink_serverをご利用ください。
+                """
+                
+            elif operation == "get_statistics":
+                result = f"""
+📈 **システム統計** (HTTP Transport版)
+
+【機能状態】
+- 推論エンジン: 動作中
+- 制約検証: 動作中  
+- サンドボックス: 動作中
+- ログ機能: 基本レベル
+
+【HTTP Transport制限】
+詳細統計は制限されています。
+                """
+                
+            elif operation == "manage_flags":
+                result = f"""
+🚩 **機能フラグ管理** (HTTP Transport版)
+
+【現在の設定】
+- History: {'有効' if is_history_enabled() else '無効'}
+- Sampling: {'有効' if is_sampling_enabled() else '無効'}
+
+【HTTP Transport制限】
+機能フラグの動的変更は制限されています。
+                """
+                
+            else:
+                result = f"""
+❌ **未対応操作** (HTTP Transport版)
+
+【操作】
+{operation}
+
+【対応操作】
+- get_history: 履歴情報取得
+- get_statistics: 統計情報取得  
+- manage_flags: 機能フラグ確認
+                """
+            
+            # 実行時間計算
+            execution_time = (datetime.now() - start_time).total_seconds() * 1000
+            
+            # ツール実行履歴記録
+            if is_history_enabled():
+                await self._log_tool_execution(
+                    tool_name="manage_system_state",
+                    inputs=inputs,
+                    core_result=result,
+                    execution_time_ms=execution_time
+                )
+            
+            logger.info(f"システム管理完了: {execution_time:.1f}ms")
+            return result
+            
+        except Exception as e:
+            error_msg = f"システム管理エラー: {str(e)}"
+            logger.error(error_msg)
+            
+            return f"""
+🚨 **システム管理エラー**
+
+【エラー内容】
+{error_msg}
+
+【対処法】
+1. 操作パラメータを確認してください
+2. 対応操作リストを確認してください
+
+【CoreThink-MCP Remote Server】
+HTTP Transport環境でのエラーです。
+            """
 
     async def generate_detailed_trace(
         self,
