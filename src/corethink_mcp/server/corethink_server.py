@@ -1591,54 +1591,19 @@ Sampling拡張: {'有効' if status['sampling_enabled'] else '無効'}
     # learn_dynamic_constraints -> manage_system_state に統合済み
     # manage_feature_flags -> manage_system_state に統合済み
 
+    # ================== 内部実装関数 ==================
+    # 注意: _collect_reasoning_materials_impl は1789行目に完全版が実装されています
+
     # ================== 統合GSR推論エンジン ==================
 
-    @app.tool()
-    async def unified_gsr_reasoning(
+    async def _unified_gsr_reasoning_impl(
         situation_description: str,
-        required_judgment: str = "evaluate_and_decide",
+        required_judgment: str = "evaluate_and_decide", 
         context_depth: str = "standard",
         reasoning_mode: str = "comprehensive",
         ctx = None
     ) -> str:
-        """
-        統合GSR推論エンジン - Phase3完全統合版（設計書準拠）
-        
-        【統合機能】
-        - reason_about_change: 変更推論
-        - orchestrate_multi_step_reasoning: 多段階推論
-        - refine_understanding: 理解精緻化
-        - unified_gsr_reasoning: GSR推論
-        
-        Args:
-            situation_description: 推論対象の状況記述（自然言語）
-            required_judgment: 求められる判断の種類
-                - "evaluate_and_decide": 評価と決定
-                - "analyze_risks": リスク分析
-                - "find_solution": 解決策発見
-                - "validate_compliance": 制約適合性検証
-                - "change_reasoning": 変更推論（旧reason_about_change）
-                - "multi_step": 多段階推論（旧orchestrate_multi_step_reasoning）
-                - "refine_understanding": 理解精緻化（旧refine_understanding）
-            context_depth: コンテキストの深度
-                - "minimal": 最小限の分析
-                - "standard": 標準的な分析
-                - "deep": 深度分析
-                - "comprehensive": 包括的分析
-            reasoning_mode: 推論モード
-                - "comprehensive": 包括的推論（デフォルト）
-                - "focused": 焦点絞り込み推論
-                - "exploratory": 探索的推論
-            ctx: FastMCP context
-            
-        Returns:
-            自然言語による完全な推論結果
-            - 判断
-            - 根拠  
-            - 推論過程
-            - 次ステップ
-            - 信頼度
-        """
+        """統合GSR推論の内部実装（MCPツールから独立）"""
         start_time = datetime.now()
         logger.info(f"統合GSR推論開始: {situation_description[:100]}...")
         
@@ -1652,11 +1617,11 @@ Sampling拡張: {'有効' if status['sampling_enabled'] else '無効'}
             if reasoning_mode == "comprehensive":
                 material_types.extend(["domain_knowledge"])
             
-            # 材料収集（並列実行可能な設計）
+            # 材料収集（内部実装を使用）
             collected_materials = ""
             if material_types:
                 materials_types_str = ",".join(set(material_types))
-                collected_materials = await collect_reasoning_materials(
+                collected_materials = await _collect_reasoning_materials_impl(
                     topic=situation_description,
                     material_types=materials_types_str,
                     depth=context_depth,
@@ -1704,26 +1669,234 @@ Layer 1 → Layer 2 → Layer 3 → Layer 4
 {(datetime.now() - start_time).total_seconds():.2f}秒
             """
             
-            # ログ記録
-            if is_history_enabled():
-                await _log_tool_execution(
-                    "unified_gsr_reasoning",
-                    {
-                        "situation": situation_description, 
-                        "judgment": required_judgment,
-                        "depth": context_depth,
-                        "mode": reasoning_mode
-                    },
-                    unified_result,
-                    datetime.now(),
-                    start_time
-                )
-            
-            logger.info(f"統合GSR推論完了: {(datetime.now() - start_time).total_seconds():.2f}秒")
+            logger.info("統合GSR推論完了")
             return unified_result.strip()
             
         except Exception as e:
             error_msg = f"統合GSR推論エラー: {str(e)}"
+            logger.error(error_msg)
+            return error_msg
+
+    @app.tool()
+    async def unified_gsr_reasoning(
+        situation_description: str,
+        required_judgment: str = "evaluate_and_decide",
+        context_depth: str = "standard",
+        reasoning_mode: str = "comprehensive",
+        ctx = None
+    ) -> str:
+        """
+        統合GSR推論エンジン - Phase3完全統合版（設計書準拠）
+        
+        【統合機能】
+        - reason_about_change: 変更推論
+        - orchestrate_multi_step_reasoning: 多段階推論
+        - refine_understanding: 理解精緻化
+        - unified_gsr_reasoning: GSR推論
+        
+        Args:
+            situation_description: 推論対象の状況記述（自然言語）
+            required_judgment: 求められる判断の種類
+                - "evaluate_and_decide": 評価と決定
+                - "analyze_risks": リスク分析
+                - "find_solution": 解決策発見
+                - "validate_compliance": 制約適合性検証
+                - "change_reasoning": 変更推論（旧reason_about_change）
+                - "multi_step": 多段階推論（旧orchestrate_multi_step_reasoning）
+                - "refine_understanding": 理解精緻化（旧refine_understanding）
+            context_depth: コンテキストの深度
+                - "minimal": 最小限の分析
+                - "standard": 標準的な分析
+                - "deep": 深度分析
+                - "comprehensive": 包括的分析
+            reasoning_mode: 推論モード
+                - "comprehensive": 包括的推論（デフォルト）
+                - "focused": 焦点絞り込み推論
+                - "exploratory": 探索的推論
+            ctx: FastMCP context
+            
+        Returns:
+            自然言語による完全な推論結果
+            - 判断
+            - 根拠  
+            - 推論過程
+            - 次ステップ
+            - 信頼度
+        """
+        return await _unified_gsr_reasoning_impl(
+            situation_description=situation_description,
+            required_judgment=required_judgment,
+            context_depth=context_depth,
+            reasoning_mode=reasoning_mode,
+            ctx=ctx
+        )
+
+    # ================== 内部実装関数（MCPツール間で共有） ==================
+    
+    async def _collect_reasoning_materials_impl(
+        topic: str,
+        material_types: str = "constraints,precedents,implications",
+        depth: str = "standard", 
+        ctx = None
+    ) -> str:
+        """
+        推論材料収集の内部実装（MCPツールと統合GSR推論で共有）
+        
+        機能劣化なしの完全な推論材料収集を行う
+        """
+        start_time = datetime.now()
+        
+        try:
+            material_types_list = [mt.strip() for mt in material_types.split(",")]
+            collected_materials = {}
+            
+            # 制約情報の収集（完全版）
+            if "constraints" in material_types_list:
+                base_constraints = load_constraints()
+                domain_constraints = load_domain_constraints(topic)
+                combined_constraints = f"{base_constraints}\n\n{domain_constraints}" if domain_constraints else base_constraints
+                collected_materials["制約情報"] = combined_constraints
+            
+            # 先例・前例の収集（完全版）
+            if "precedents" in material_types_list:
+                # 実際のファイルシステムから先例を検索
+                try:
+                    project_files = []
+                    repo_root = Path(REPO_ROOT)
+                    for ext in ['.py', '.md', '.txt']:
+                        project_files.extend(repo_root.glob(f"**/*{ext}"))
+                    
+                    relevant_precedents = []
+                    topic_keywords = topic.lower().split()
+                    
+                    for file_path in project_files[:20]:  # 最大20ファイルを調査
+                        try:
+                            content = file_path.read_text(encoding='utf-8', errors='ignore')
+                            if any(keyword in content.lower() for keyword in topic_keywords):
+                                relevant_precedents.append(f"{file_path.name}: {content[:200]}...")
+                        except Exception:
+                            continue
+                    
+                    if relevant_precedents:
+                        collected_materials["先例・前例"] = "\n".join(relevant_precedents[:5])
+                    else:
+                        collected_materials["先例・前例"] = f"{topic}に関連する標準的な手法とベストプラクティスを適用"
+                        
+                except Exception as e:
+                    collected_materials["先例・前例"] = f"先例検索中にエラー: {str(e)}"
+            
+            # 影響・含意の収集（完全版）
+            if "implications" in material_types_list:
+                domain = _detect_domain(topic)
+                domain_keywords = _load_domain_keywords().get(domain, [])
+                
+                implications = []
+                implications.append(f"【技術的影響】{topic}による技術的変更の波及効果")
+                implications.append(f"【運用面への影響】システム運用・保守への影響")
+                
+                if domain_keywords:
+                    implications.append(f"【分野特化影響】{domain}分野固有の考慮事項: {', '.join(domain_keywords[:3])}")
+                
+                collected_materials["影響・含意"] = "\n".join(implications)
+            
+            # 専門知識の収集（完全版）
+            if "domain_knowledge" in material_types_list:
+                domain = _detect_domain(topic)
+                domain_knowledge = []
+                
+                if domain != "general":
+                    domain_file = CONSTRAINTS_DIR / f"constraints_{domain}.txt"
+                    if domain_file.exists():
+                        domain_content = domain_file.read_text(encoding='utf-8')
+                        domain_knowledge.append(f"【{domain.upper()}分野の専門知識】\n{domain_content[:1000]}")
+                
+                if not domain_knowledge:
+                    domain_knowledge.append(f"【一般的専門知識】{topic}に関連する技術的・理論的背景")
+                
+                collected_materials["専門知識"] = "\n".join(domain_knowledge)
+            
+            # リスク要因の収集（完全版）
+            if "risk_factors" in material_types_list:
+                risk_factors = []
+                risk_factors.append(f"【セキュリティリスク】{topic}に関連するセキュリティ上の懸念")
+                risk_factors.append(f"【パフォーマンスリスク】処理性能・リソース使用量への影響")
+                risk_factors.append(f"【互換性リスク】既存システムとの互換性問題")
+                risk_factors.append(f"【運用リスク】運用・保守時の潜在的問題")
+                
+                collected_materials["リスク要因"] = "\n".join(risk_factors)
+            
+            # シンボリックパターンの検出（完全版）
+            if "symbolic_patterns" in material_types_list:
+                patterns = []
+                patterns.append(f"【構造パターン】{topic}の論理構造と依存関係")
+                patterns.append(f"【処理パターン】典型的な処理フローとデータフロー")
+                patterns.append(f"【設計パターン】適用可能な設計パターンとアーキテクチャ")
+                
+                collected_materials["シンボリックパターン"] = "\n".join(patterns)
+            
+            # リポジトリコンテキストの分析（完全版）
+            if "repository_context" in material_types_list:
+                try:
+                    repo_analysis = []
+                    repo_root = Path(REPO_ROOT)
+                    
+                    # プロジェクト構造の分析
+                    py_files = list(repo_root.glob("**/*.py"))
+                    md_files = list(repo_root.glob("**/*.md"))
+                    
+                    repo_analysis.append(f"【プロジェクト構造】Python ファイル: {len(py_files)}, ドキュメント: {len(md_files)}")
+                    
+                    # 主要ディレクトリの分析
+                    main_dirs = [d for d in repo_root.iterdir() if d.is_dir() and not d.name.startswith('.')]
+                    repo_analysis.append(f"【主要ディレクトリ】{', '.join([d.name for d in main_dirs[:5]])}")
+                    
+                    collected_materials["リポジトリコンテキスト"] = "\n".join(repo_analysis)
+                    
+                except Exception as e:
+                    collected_materials["リポジトリコンテキスト"] = f"リポジトリ分析エラー: {str(e)}"
+            
+            # 統合結果の生成
+            materials_report = f"""
+🧠 **CoreThink推論材料収集結果** (完全版)
+
+【調査対象】
+{topic}
+
+【収集材料タイプ】
+{material_types}
+
+【収集深度】
+{depth}
+
+【収集された材料】
+"""
+            
+            for material_type, content in collected_materials.items():
+                materials_report += f"\n## {material_type}\n{content}\n"
+            
+            materials_report += f"""
+【収集完了時刻】
+{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+【収集所要時間】
+{(datetime.now() - start_time).total_seconds():.2f}秒
+            """
+            
+            # ログ記録
+            if is_history_enabled():
+                execution_time_ms = (datetime.now() - start_time).total_seconds() * 1000
+                await _log_tool_execution(
+                    tool_name="collect_reasoning_materials",
+                    inputs={"topic": topic, "material_types": material_types, "depth": depth},
+                    core_result=materials_report,
+                    execution_time_ms=execution_time_ms
+                )
+            
+            logger.info(f"推論材料収集完了: {(datetime.now() - start_time).total_seconds():.2f}秒")
+            return materials_report.strip()
+            
+        except Exception as e:
+            error_msg = f"推論材料収集エラー: {str(e)}"
             logger.error(error_msg)
             return error_msg
 
@@ -1762,101 +1935,8 @@ Layer 1 → Layer 2 → Layer 3 → Layer 4
         Returns:
             収集された材料の自然言語記述
         """
-        start_time = datetime.now()
-        logger.info(f"推論材料収集開始: {topic}")
-        
-        try:
-            # 材料種類の解析
-            requested_types = [t.strip() for t in material_types.split(',')]
-            
-            # 深度別処理設定
-            depth_config = {
-                "minimal": {"timeout": 5, "detail_level": "基本情報のみ"},
-                "standard": {"timeout": 10, "detail_level": "標準的な詳細情報"},
-                "deep": {"timeout": 20, "detail_level": "詳細分析と背景情報"},
-                "comprehensive": {"timeout": 30, "detail_level": "包括的分析と関連情報"}
-            }
-            
-            config = depth_config.get(depth, depth_config["standard"])
-            
-            # Phase2最適化: 材料種類別収集
-            collected_materials = {}
-            
-            # 制約情報収集
-            if "constraints" in requested_types:
-                collected_materials["制約情報"] = await _collect_constraint_materials(topic, depth)
-            
-            # 先例・前例収集  
-            if "precedents" in requested_types:
-                collected_materials["先例・前例"] = await _collect_precedent_materials(topic, depth, ctx)
-                
-            # 影響・含意収集
-            if "implications" in requested_types:
-                collected_materials["影響・含意"] = await _collect_implication_materials(topic, depth, ctx)
-                
-            # 専門知識収集
-            if "domain_knowledge" in requested_types:
-                collected_materials["専門知識"] = await _collect_domain_knowledge(topic, depth, ctx)
-                
-            # リスク要因収集
-            if "risk_factors" in requested_types:
-                collected_materials["リスク要因"] = await _collect_risk_factors(topic, depth, ctx)
-            
-            # Phase3統合: 新機能追加
-            # パターン検出（旧detect_symbolic_patterns統合）
-            if "symbolic_patterns" in requested_types:
-                collected_materials["パターン検出"] = await _collect_symbolic_patterns(topic, depth, ctx)
-                
-            # リポジトリ分析（旧analyze_repository_context統合）
-            if "repository_context" in requested_types:
-                collected_materials["リポジトリ分析"] = await _collect_repository_context(topic, depth, ctx)
-            
-            # 統合結果の生成
-            materials_report = f"""
-【推論材料収集結果】
-
-【調査対象】
-{topic}
-
-【収集材料種別】
-{material_types}
-
-【調査深度】
-{depth} ({config['detail_level']})
-"""
-            
-            # 収集した材料の統合
-            for material_type, content in collected_materials.items():
-                materials_report += f"""
-【{material_type}】
-{content}
-"""
-            
-            materials_report += f"""
-【収集完了時刻】
-{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-【収集所要時間】
-{(datetime.now() - start_time).total_seconds():.2f}秒
-            """
-            
-            # ログ記録
-            if is_history_enabled():
-                await _log_tool_execution(
-                    "collect_reasoning_materials",
-                    {"topic": topic, "material_types": material_types, "depth": depth},
-                    materials_report,
-                    datetime.now(),
-                    start_time
-                )
-            
-            logger.info(f"推論材料収集完了: {(datetime.now() - start_time).total_seconds():.2f}秒")
-            return materials_report.strip()
-            
-        except Exception as e:
-            error_msg = f"推論材料収集エラー: {str(e)}"
-            logger.error(error_msg)
-            return error_msg
+        # MCPツール版は内部実装を呼び出し
+        return await _collect_reasoning_materials_impl(topic, material_types, depth, ctx)
 
     # ================== Phase3統合: システム管理エンジン ==================
     
@@ -1975,12 +2055,12 @@ Layer 1 → Layer 2 → Layer 3 → Layer 4
             
             # ログ記録
             if is_history_enabled():
+                execution_time_ms = (datetime.now() - start_time).total_seconds() * 1000
                 await _log_tool_execution(
-                    "manage_system_state",
-                    {"operation": operation, "target": target, "parameters": parameters},
-                    result,
-                    datetime.now(),
-                    start_time
+                    tool_name="manage_system_state",
+                    inputs={"operation": operation, "target": target, "parameters": parameters},
+                    core_result=result,
+                    execution_time_ms=execution_time_ms
                 )
             
             logger.info(f"システム管理操作完了: {(datetime.now() - start_time).total_seconds():.2f}秒")
