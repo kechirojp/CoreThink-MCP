@@ -465,16 +465,16 @@ CoreThink推論結果を踏まえた追加考慮点や代替案を提案して�
         ctx = None  # FastMCPコンテキスト（Sampling機能含む）
     ) -> str:
         """
-        Validates proposed changes against defined constraints using natural language.
-        Checks compliance with safety, security, and operational constraints.
+        提案された変更が制約条件に適合するかを自然言語で検証します。
+        安全性、セキュリティ、運用制約への適合性をチェックします。
         
         Args:
-            proposed_change: Description of the proposed change
-            reasoning_context: Additional context for validation
-            ctx: FastMCP context (includes sampling capability)
+            proposed_change: 提案された変更の説明
+            reasoning_context: 検証のための追加コンテキスト
+            ctx: FastMCPコンテキスト（Sampling機能含む）
             
         Returns:
-            Natural language validation result with compliance status
+            適合性ステータスを含む自然言語による検証結果
         """
         logger.info("制約検証開始")
         
@@ -520,16 +520,16 @@ CoreThink推論結果を踏まえた追加考慮点や代替案を提案して�
         ctx = None  # FastMCPコンテキスト（Sampling機能含む）
     ) -> str:
         """
-        Executes changes with comprehensive safety measures and sandbox isolation.
-        Implements git worktree-based sandboxing for safe code modifications.
+        サンドボックス環境で安全にコード変更を実行します。
+        Git worktreeベースのサンドボックスを使用した安全なコード変更を実装します。
         
         Args:
-            action_description: Description of the action to execute
-            dry_run: If True, performs simulation only; if False, applies changes
-            ctx: FastMCP context (includes sampling capability)
+            action_description: 実行するアクションの説明
+            dry_run: Trueの場合はシミュレーションのみ、Falseの場合は変更を適用
+            ctx: FastMCPコンテキスト（Sampling機能含む）
             
         Returns:
-            Natural language execution result with safety status and impact assessment
+            安全性ステータスと影響評価を含む自然言語による実行結果
         """
         logger.info(f"実行開始 (dry_run={dry_run}): {action_description}")
         
@@ -574,16 +574,16 @@ CoreThink推論結果を踏まえた追加考慮点や代替案を提案して�
         reasoning_depth: str = "standard"  # standard, detailed, minimal
     ) -> str:
         """
-        Generates detailed GSR reasoning traces with transparency indicators.
-        Implements verbatim reasoning trace requirements from Section 5.3.
+        推論過程の詳細な記録と透明性の確保を行います。
+        セクション5.3の逐語的推論トレース要件を実装します。
         
         Args:
-            context: The reasoning context or background information
-            step_description: Description of the current reasoning step
-            reasoning_depth: Level of detail (minimal, standard, detailed)
+            context: 推論コンテキストまたは背景情報
+            step_description: 現在の推論ステップの説明
+            reasoning_depth: 詳細レベル（minimal, standard, detailed）
             
         Returns:
-            Comprehensive reasoning trace with timestamp, transparency metrics, and verification indicators
+            タイムスタンプ、透明性指標、検証インジケータを含む包括的推論トレース
         """
         logger.info(f"推論トレース開始: {step_description}")
         
@@ -1824,7 +1824,7 @@ Layer 1 → Layer 2 → Layer 3 → Layer 4
         ctx = None
     ) -> str:
         """
-        統合GSR推論エンジン - Phase3完全統合版（設計書準拠）
+        総合的な推論・判断・評価を一括で実行します
         
         【統合機能】
         - reason_about_change: 変更推論
@@ -2046,7 +2046,7 @@ Layer 1 → Layer 2 → Layer 3 → Layer 4
         ctx = None
     ) -> str:
         """
-        推論材料収集ツール - Phase3完全統合版（設計書準拠）
+        推論に必要な制約・先例・専門知識を収集します
         
         【統合機能】
         - collect_reasoning_materials: 材料収集
@@ -2086,7 +2086,7 @@ Layer 1 → Layer 2 → Layer 3 → Layer 4
         ctx = None
     ) -> str:
         """
-        システム管理エンジン - Phase3完全統合版（設計書準拠）
+        システムの状態管理と設定変更を行います
         
         【統合機能】
         - get_reasoning_history: 履歴取得
